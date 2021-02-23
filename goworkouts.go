@@ -14,23 +14,28 @@ import (
 
 // WorkoutStep is the container of a Workout Step
 type WorkoutStep struct {
-	MessageIndex          fit.MessageIndex `json:"name=message_index"`
+	MessageIndex          fit.MessageIndex `json:"name=stepId"`
 	WktStepName           string           `json:"wkt_step_name"`
-	DurationType          string           `json:"duration_type"`
-	DurationValue         uint32           `json:"duration_value"`
-	TargetType            string           `json:"target_type"`
-	TargetValue           uint32           `json:"target_value"`
-	CustomTargetValueLow  uint32           `json:"custom_target_value_low"`
-	CustomTargetValueHigh uint32           `json:"custom_target_value_high"`
+	DurationType          string           `json:"durationType"`
+	DurationValue         uint32           `json:"durationValue"`
+	TargetType            string           `json:"repeatType"`
+	TargetValue           uint32           `json:"repeatValue"`
+	CustomTargetValueLow  uint32           `json:"targetValueLow"`
+	CustomTargetValueHigh uint32           `json:"targetValueHigh"`
 	Intensity             string           `json:"intensity"`
-	Notes                 string           `json:"notes"`
+	Notes                 string           `json:"description"`
+	// Type                  string           `json:"type"`
 }
 
 // Workout is a Workout
 type Workout struct {
-	Filename string        `json:"filename"`
-	Name     string        `json:"name"`
-	Steps    []WorkoutStep `json:"steps"`
+	Filename    string        `json:"filename"`
+	Name        string        `json:"workoutName"`
+	Steps       []WorkoutStep `json:"steps"`
+	Sport       string        `json:"sport"`
+	Description string        `json:"description"`
+	// WorkoutID uint64         `json:"WorkoutId"`
+	// OwnerID   uint64         `json:"ownerId"`
 }
 
 // ToJSON export to JSON
