@@ -18,8 +18,8 @@ type WorkoutStep struct {
 	WktStepName           string           `json:"wkt_step_name"`
 	DurationType          string           `json:"durationType"`
 	DurationValue         uint32           `json:"durationValue"`
-	TargetType            string           `json:"repeatType"`
-	TargetValue           uint32           `json:"repeatValue"`
+	TargetType            string           `json:"targetType"`
+	TargetValue           uint32           `json:"targetValue"`
 	CustomTargetValueLow  uint32           `json:"targetValueLow"`
 	CustomTargetValueHigh uint32           `json:"targetValueHigh"`
 	Intensity             string           `json:"intensity"`
