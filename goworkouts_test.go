@@ -51,7 +51,7 @@ func TestReadFittoJSON(t *testing.T) {
 		t.Errorf("ReadFit returned an error")
 	}
 	wjson, err := w.ToJSON()
-	if len(wjson) != 1011 {
+	if len(wjson) != 954 {
 		t.Errorf("ToJSON returned a string of a different length")
 	}
 	if err != nil {
