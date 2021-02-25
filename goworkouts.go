@@ -13,8 +13,8 @@ import (
 )
 
 // WorkoutStep is the container of a Workout Step
-type WorkoutStep struct {
-	MessageIndex          fit.MessageIndex `json:"name=stepId"`
+type workoutStep struct {
+	MessageIndex          fit.MessageIndex `json:"stepId"`
 	WktStepName           string           `json:"wkt_step_name"`
 	DurationType          string           `json:"durationType"`
 	DurationValue         uint32           `json:"durationValue"`
@@ -27,11 +27,20 @@ type WorkoutStep struct {
 	// Type                  string           `json:"type"`
 }
 
+func NewWorkoutStep() workoutStep {
+	newstep := workoutStep{}
+	newstep.DurationValue = 0
+	newstep.TargetValue = 0
+	newstep.CustomTargetValueLow = 0
+	newstep.CustomTargetValueHigh = 0
+	return newstep
+}
+
 // Workout is a Workout
 type Workout struct {
 	Filename    string        `json:"filename"`
 	Name        string        `json:"workoutName"`
-	Steps       []WorkoutStep `json:"steps"`
+	Steps       []workoutStep `json:"steps"`
 	Sport       string        `json:"sport"`
 	Description string        `json:"description"`
 	// WorkoutID uint64         `json:"WorkoutId"`
@@ -150,8 +159,8 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 	return newFile, nil
 }
 
-func makeStep(s *fit.WorkoutStepMsg) (WorkoutStep, error) {
-	step := WorkoutStep{}
+func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
+	step := NewWorkoutStep()
 	step.MessageIndex = s.MessageIndex
 	step.WktStepName = s.WktStepName
 	step.DurationType = s.DurationType.String()
@@ -228,7 +237,7 @@ func ReadFit(f string) (Workout, error) {
 	neww := Workout{}
 	neww.Name = w.Workout.WktName
 	neww.Filename = f
-	var newsteps []WorkoutStep
+	var newsteps []workoutStep
 
 	for _, step := range steps {
 		s, err := makeStep(step)
