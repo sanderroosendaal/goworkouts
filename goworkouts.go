@@ -27,6 +27,7 @@ type workoutStep struct {
 	// Type                  string           `json:"type"`
 }
 
+// NewWorkoutStep creates new workout step
 func NewWorkoutStep() workoutStep {
 	newstep := workoutStep{}
 	newstep.DurationValue = 0
