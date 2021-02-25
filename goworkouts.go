@@ -28,7 +28,7 @@ type workoutStep struct {
 }
 
 // NewWorkoutStep creates new workout step
-func NewWorkoutStep() workoutStep {
+func newWorkoutStep() workoutStep {
 	newstep := workoutStep{}
 	newstep.DurationValue = 0
 	newstep.TargetValue = 0
@@ -161,7 +161,7 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 }
 
 func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
-	step := NewWorkoutStep()
+	step := newWorkoutStep()
 	step.MessageIndex = s.MessageIndex
 	step.WktStepName = s.WktStepName
 	step.DurationType = s.DurationType.String()
