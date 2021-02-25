@@ -160,7 +160,8 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 	return newFile, nil
 }
 
-const maxTargetValue = 10000000
+// MaxUint maximum int value (default in fit)
+const MaxUint = ^uint32(0)
 
 func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
 	step := newWorkoutStep()
@@ -171,11 +172,13 @@ func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
 	step.Intensity = s.Intensity.String()
 	step.Notes = s.Notes
 	step.TargetType = s.TargetType.String()
-	step.TargetValue = s.TargetValue
-	if s.CustomTargetValueLow <= maxTargetValue {
+	if s.TargetValue < MaxUint {
+		step.TargetValue = s.TargetValue
+	}
+	if s.CustomTargetValueLow < MaxUint {
 		step.CustomTargetValueLow = s.CustomTargetValueLow
 	}
-	if s.CustomTargetValueHigh <= maxTargetValue {
+	if s.CustomTargetValueHigh < MaxUint {
 		step.CustomTargetValueHigh = s.CustomTargetValueHigh
 	}
 
