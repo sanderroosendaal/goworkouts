@@ -9,6 +9,18 @@ import (
 	"github.com/tormoder/fit"
 )
 
+func TestRowsandallFit(t *testing.T) {
+	w, err := ReadFit("testdata/session.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	wjson, err := w.ToJSON()
+	if err != nil {
+		t.Errorf("Could not convert to JSON")
+	}
+	fmt.Println(string(wjson))
+}
+
 func TestReadFit(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
 	if err != nil {
@@ -20,6 +32,17 @@ func TestReadFit2(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutIndividualSteps.fit")
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
+	}
+}
+
+func TestDecodeJSON(t *testing.T) {
+	var wjson string
+	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}]}"
+	_, err := FromJSON(wjson)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("Got error")
+
 	}
 }
 
