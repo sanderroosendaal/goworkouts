@@ -53,6 +53,13 @@ func (w *Workout) ToJSON() ([]byte, error) {
 	return json.Marshal(w)
 }
 
+// FromJSON returns workout from json string
+func FromJSON(s string) (Workout, error) {
+	var w Workout
+	err := json.Unmarshal([]byte(s), &w)
+	return w, err
+}
+
 var targetTypes = map[string]fit.WktStepTarget{
 	"Speed":        fit.WktStepTargetSpeed,        //        WktStepTarget = 0
 	"HeartRate":    fit.WktStepTargetHeartRate,    //    WktStepTarget = 1
@@ -168,7 +175,9 @@ func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
 	step.MessageIndex = s.MessageIndex
 	step.WktStepName = s.WktStepName
 	step.DurationType = s.DurationType.String()
-	step.DurationValue = s.DurationValue
+	if s.DurationValue < MaxUint {
+		step.DurationValue = s.DurationValue
+	}
 	step.Intensity = s.Intensity.String()
 	step.Notes = s.Notes
 	step.TargetType = s.TargetType.String()
