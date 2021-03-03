@@ -60,6 +60,18 @@ func FromJSON(s string) (Workout, error) {
 	return w, err
 }
 
+// TrainingDay is a training day in the training plan
+type TrainingDay struct {
+	Order    uint32    `json:"order"` // how manieth calendar day
+	Workouts []Workout `json:"workouts"`
+}
+
+// TrainingPlan is a training plan
+type TrainingPlan struct {
+	TrainingDays []TrainingDay `json:"trainingDays"`
+	Duration     uint32        `json:"duration"` // in number of calendar days
+}
+
 var targetTypes = map[string]fit.WktStepTarget{
 	"Speed":        fit.WktStepTargetSpeed,        //        WktStepTarget = 0
 	"HeartRate":    fit.WktStepTargetHeartRate,    //    WktStepTarget = 1
