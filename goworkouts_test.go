@@ -2,6 +2,7 @@ package goworkouts
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -157,5 +158,34 @@ func TestWriter(t *testing.T) {
 		if step.DurationValue != oldSteps[i].DurationValue {
 			t.Errorf("Expected %v, got %v", oldSteps[i].DurationValue, step.DurationValue)
 		}
+	}
+}
+
+func TestTrainingPlan(t *testing.T) {
+	w1, err := ReadFit("testdata/fitsdk/WorkoutIndividualSteps.fit")
+	if err != nil {
+		t.Errorf("Could not read fit file")
+	}
+	w2, err := ReadFit("testdata/fitsdk/WorkoutRepeatGreaterThanStep.fit")
+	if err != nil {
+		t.Errorf("Could not read fit file")
+	}
+	w3, err := ReadFit("testdata/fitsdk/WorkoutRepeatSteps.fit")
+	if err != nil {
+		t.Errorf("Could not read fit file")
+	}
+	day1 := TrainingDay{1, []Workout{w1}}
+	day2 := TrainingDay{2, []Workout{w2}}
+	day3 := TrainingDay{4, []Workout{w3}}
+
+	plan := TrainingPlan{[]TrainingDay{day1, day2, day3}, 4}
+	planJSON, err := json.Marshal(plan)
+	if err != nil {
+		t.Errorf("Could not convert training plan to json")
+	}
+	fmt.Println(string(planJSON))
+	fmt.Println(len(planJSON))
+	if len(planJSON) != 3263 {
+		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", 3263, len(planJSON))
 	}
 }
