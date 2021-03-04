@@ -179,13 +179,14 @@ func TestTrainingPlan(t *testing.T) {
 	day3 := TrainingDay{4, []Workout{w3}}
 
 	plan := TrainingPlan{[]TrainingDay{day1, day2, day3}, 4}
-	planJSON, err := json.Marshal(plan)
+	planJSON, err := json.MarshalIndent(plan, "", "   ")
 	if err != nil {
 		t.Errorf("Could not convert training plan to json")
 	}
 	fmt.Println(string(planJSON))
 	fmt.Println(len(planJSON))
-	if len(planJSON) != 3263 {
-		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", 3263, len(planJSON))
+	expected := 7549
+	if len(planJSON) != expected {
+		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))
 	}
 }

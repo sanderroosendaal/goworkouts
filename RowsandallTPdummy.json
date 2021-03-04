@@ -1,0 +1,212 @@
+{
+   "trainingDays": [
+      {
+         "order": 1,
+         "workouts": [
+            {
+               "filename": "testdata/fitsdk/WorkoutIndividualSteps.fit",
+               "workoutName": "Example 1",
+               "steps": [
+                  {
+                     "stepId": 0,
+                     "wkt_step_name": "_A_",
+                     "durationType": "Time",
+                     "durationValue": 60000,
+                     "targetType": "HeartRate",
+                     "targetValue": 2,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Warmup",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 1,
+                     "wkt_step_name": "B1_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 5,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 2,
+                     "wkt_step_name": "B2_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 3,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 3,
+                     "wkt_step_name": "_C_",
+                     "durationType": "HrLessThan",
+                     "durationValue": 225,
+                     "targetType": "Power",
+                     "targetValue": 1,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Cooldown",
+                     "description": ""
+                  }
+               ],
+               "sport": "",
+               "description": ""
+            }
+         ]
+      },
+      {
+         "order": 2,
+         "workouts": [
+            {
+               "filename": "testdata/fitsdk/WorkoutRepeatGreaterThanStep.fit",
+               "workoutName": "Example 2",
+               "steps": [
+                  {
+                     "stepId": 0,
+                     "wkt_step_name": "_A_",
+                     "durationType": "Time",
+                     "durationValue": 60000,
+                     "targetType": "HeartRate",
+                     "targetValue": 2,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Warmup",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 1,
+                     "wkt_step_name": "B1_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 5,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 2,
+                     "wkt_step_name": "B2_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 3,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 3,
+                     "wkt_step_name": "Rep",
+                     "durationType": "RepeatUntilHrGreaterThan",
+                     "durationValue": 1,
+                     "targetType": "HeartRate",
+                     "targetValue": 80,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 4,
+                     "wkt_step_name": "_C_",
+                     "durationType": "HrLessThan",
+                     "durationValue": 225,
+                     "targetType": "Power",
+                     "targetValue": 1,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Cooldown",
+                     "description": ""
+                  }
+               ],
+               "sport": "",
+               "description": ""
+            }
+         ]
+      },
+      {
+         "order": 4,
+         "workouts": [
+            {
+               "filename": "testdata/fitsdk/WorkoutRepeatSteps.fit",
+               "workoutName": "Example 2",
+               "steps": [
+                  {
+                     "stepId": 0,
+                     "wkt_step_name": "_A_",
+                     "durationType": "Time",
+                     "durationValue": 60000,
+                     "targetType": "HeartRate",
+                     "targetValue": 2,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Warmup",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 1,
+                     "wkt_step_name": "B1_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 5,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 2,
+                     "wkt_step_name": "B2_",
+                     "durationType": "Distance",
+                     "durationValue": 50000,
+                     "targetType": "Power",
+                     "targetValue": 3,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 3,
+                     "wkt_step_name": "Rep",
+                     "durationType": "RepeatUntilStepsCmplt",
+                     "durationValue": 1,
+                     "targetType": "Open",
+                     "targetValue": 3,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Active",
+                     "description": ""
+                  },
+                  {
+                     "stepId": 4,
+                     "wkt_step_name": "_C_",
+                     "durationType": "HrLessThan",
+                     "durationValue": 225,
+                     "targetType": "Power",
+                     "targetValue": 1,
+                     "targetValueLow": 0,
+                     "targetValueHigh": 0,
+                     "intensity": "Cooldown",
+                     "description": ""
+                  }
+               ],
+               "sport": "",
+               "description": ""
+            }
+         ]
+      }
+   ],
+   "duration": 4
+}
