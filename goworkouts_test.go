@@ -47,6 +47,16 @@ func TestDecodeJSON(t *testing.T) {
 	}
 }
 
+func TestDecodeJSONOK2(t *testing.T) {
+	var wjson string
+	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"/home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"2\", \"stepId\": 2, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"3\", \"stepId\": 3, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"4\", \"stepId\": 4, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"5\", \"stepId\": 5, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"6\", \"stepId\": 6, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"7\", \"stepId\": 7, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}]}"
+	_, err := FromJSON(wjson)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("Got Error")
+	}
+}
+
 func TestReadFit3(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutRepeatSteps.fit")
 	wjson, err := w.ToJSON()
