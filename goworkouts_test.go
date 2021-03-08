@@ -47,6 +47,16 @@ func TestDecodeJSON(t *testing.T) {
 	}
 }
 
+func TestDecodeJSONOK2(t *testing.T) {
+	var wjson string
+	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"/home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"2\", \"stepId\": 2, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"3\", \"stepId\": 3, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"4\", \"stepId\": 4, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"5\", \"stepId\": 5, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"6\", \"stepId\": 6, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"7\", \"stepId\": 7, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}]}"
+	_, err := FromJSON(wjson)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("Got Error")
+	}
+}
+
 func TestReadFit3(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutRepeatSteps.fit")
 	wjson, err := w.ToJSON()
@@ -84,6 +94,22 @@ func TestReadFittoJSON(t *testing.T) {
 	}
 }
 
+func TestReadFittoYAML(t *testing.T) {
+	w, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	wyaml, err := w.ToYAML()
+	//fmt.Println(len(wyaml))
+	//fmt.Println(string(wyaml))
+	if len(wyaml) != 922 {
+		t.Errorf("ToYAML returned a string of a different length")
+	}
+	if err != nil {
+		t.Errorf("ToYAML returned an error")
+	}
+}
+
 func TestReadFittoFIT(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
 	if err != nil {
@@ -101,13 +127,10 @@ func TestReadFittoFIT(t *testing.T) {
 		t.Errorf("Not written")
 	}
 	data, _ := ioutil.ReadFile("testdata/new.fit")
-	fitf, err := fit.Decode(bytes.NewReader(data))
+	_, err = fit.Decode(bytes.NewReader(data))
 	if err != nil {
 		t.Errorf("Could not read written file")
 	}
-	fmt.Println(fitf.FileId.Type)
-	fmt.Println(fitf.FileId.TimeCreated)
-	fmt.Println(fitf.FileId.Manufacturer)
 }
 
 func TestWriter(t *testing.T) {
@@ -133,9 +156,6 @@ func TestWriter(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not read written file")
 	}
-	fmt.Println(fitf.FileId.Type)
-	fmt.Println(fitf.FileId.TimeCreated)
-	fmt.Println(fitf.FileId.Manufacturer)
 
 	workoutFile, err := fitf.Workout()
 	if err != nil {
@@ -179,13 +199,14 @@ func TestTrainingPlan(t *testing.T) {
 	day3 := TrainingDay{4, []Workout{w3}}
 
 	plan := TrainingPlan{[]TrainingDay{day1, day2, day3}, 4}
-	planJSON, err := json.Marshal(plan)
+	planJSON, err := json.MarshalIndent(plan, "", "   ")
 	if err != nil {
 		t.Errorf("Could not convert training plan to json")
 	}
-	fmt.Println(string(planJSON))
-	fmt.Println(len(planJSON))
-	if len(planJSON) != 3263 {
-		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", 3263, len(planJSON))
+	//	fmt.Println(string(planJSON))
+	//	fmt.Println(len(planJSON))
+	expected := 7549
+	if len(planJSON) != expected {
+		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))
 	}
 }
