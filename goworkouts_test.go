@@ -94,6 +94,22 @@ func TestReadFittoJSON(t *testing.T) {
 	}
 }
 
+func TestReadFittoYAML(t *testing.T) {
+	w, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	wyaml, err := w.ToYAML()
+	//fmt.Println(len(wyaml))
+	//fmt.Println(string(wyaml))
+	if len(wyaml) != 922 {
+		t.Errorf("ToYAML returned a string of a different length")
+	}
+	if err != nil {
+		t.Errorf("ToYAML returned an error")
+	}
+}
+
 func TestReadFittoFIT(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
 	if err != nil {
@@ -111,13 +127,10 @@ func TestReadFittoFIT(t *testing.T) {
 		t.Errorf("Not written")
 	}
 	data, _ := ioutil.ReadFile("testdata/new.fit")
-	fitf, err := fit.Decode(bytes.NewReader(data))
+	_, err = fit.Decode(bytes.NewReader(data))
 	if err != nil {
 		t.Errorf("Could not read written file")
 	}
-	fmt.Println(fitf.FileId.Type)
-	fmt.Println(fitf.FileId.TimeCreated)
-	fmt.Println(fitf.FileId.Manufacturer)
 }
 
 func TestWriter(t *testing.T) {
@@ -143,9 +156,6 @@ func TestWriter(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not read written file")
 	}
-	fmt.Println(fitf.FileId.Type)
-	fmt.Println(fitf.FileId.TimeCreated)
-	fmt.Println(fitf.FileId.Manufacturer)
 
 	workoutFile, err := fitf.Workout()
 	if err != nil {
@@ -193,8 +203,8 @@ func TestTrainingPlan(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not convert training plan to json")
 	}
-	fmt.Println(string(planJSON))
-	fmt.Println(len(planJSON))
+	//	fmt.Println(string(planJSON))
+	//	fmt.Println(len(planJSON))
 	expected := 7549
 	if len(planJSON) != expected {
 		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))

@@ -10,20 +10,21 @@ import (
 	"time"
 
 	"github.com/tormoder/fit"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // WorkoutStep is the container of a Workout Step
 type workoutStep struct {
-	MessageIndex          fit.MessageIndex `json:"stepId"`
-	WktStepName           string           `json:"wkt_step_name"`
-	DurationType          string           `json:"durationType"`
-	DurationValue         uint32           `json:"durationValue"`
-	TargetType            string           `json:"targetType"`
-	TargetValue           uint32           `json:"targetValue"`
-	CustomTargetValueLow  uint32           `json:"targetValueLow"`
-	CustomTargetValueHigh uint32           `json:"targetValueHigh"`
-	Intensity             string           `json:"intensity"`
-	Notes                 string           `json:"description"`
+	MessageIndex          fit.MessageIndex `json:"stepId" yaml:"stepId"`
+	WktStepName           string           `json:"wkt_step_name" yaml:"wkt_step_name"`
+	DurationType          string           `json:"durationType" yaml:"durationType"`
+	DurationValue         uint32           `json:"durationValue" yaml:"durationValue"`
+	TargetType            string           `json:"targetType" yaml:"targetType"`
+	TargetValue           uint32           `json:"targetValue" yaml:"targetValue"`
+	CustomTargetValueLow  uint32           `json:"targetValueLow" yaml:"targetValueLow"`
+	CustomTargetValueHigh uint32           `json:"targetValueHigh" yaml:"targetValueHigh"`
+	Intensity             string           `json:"intensity" yaml:"intensity"`
+	Notes                 string           `json:"description" yaml:"description"`
 	// Type                  string           `json:"type"`
 }
 
@@ -39,11 +40,11 @@ func newWorkoutStep() workoutStep {
 
 // Workout is a Workout
 type Workout struct {
-	Filename    string        `json:"filename"`
-	Name        string        `json:"workoutName"`
-	Steps       []workoutStep `json:"steps"`
-	Sport       string        `json:"sport"`
-	Description string        `json:"description"`
+	Filename    string        `json:"filename" yaml:"filename"`
+	Name        string        `json:"workoutName" yaml:"workoutName"`
+	Steps       []workoutStep `json:"steps" yaml:"steps"`
+	Sport       string        `json:"sport" yaml:"sport"`
+	Description string        `json:"description" yaml:"description"`
 	// WorkoutID uint64         `json:"WorkoutId"`
 	// OwnerID   uint64         `json:"ownerId"`
 }
@@ -53,6 +54,11 @@ func (w *Workout) ToJSON() ([]byte, error) {
 	return json.Marshal(w)
 }
 
+// ToYAML export to YAML
+func (w *Workout) ToYAML() ([]byte, error) {
+	return yaml.Marshal(w)
+}
+
 // FromJSON returns workout from json string
 func FromJSON(s string) (Workout, error) {
 	var w Workout
@@ -60,16 +66,23 @@ func FromJSON(s string) (Workout, error) {
 	return w, err
 }
 
+// FromYAML returns workout from YAML
+func FromYAML(s string) (Workout, error) {
+	var w Workout
+	err := yaml.Unmarshal([]byte(s), &w)
+	return w, err
+}
+
 // TrainingDay is a training day in the training plan
 type TrainingDay struct {
-	Order    uint32    `json:"order"` // how manieth calendar day
-	Workouts []Workout `json:"workouts"`
+	Order    uint32    `json:"order" yaml:"order"` // how manieth calendar day
+	Workouts []Workout `json:"workouts" yaml:"workouts"`
 }
 
 // TrainingPlan is a training plan
 type TrainingPlan struct {
-	TrainingDays []TrainingDay `json:"trainingDays"`
-	Duration     uint32        `json:"duration"` // in number of calendar days
+	TrainingDays []TrainingDay `json:"trainingDays" yaml:"trainingDays"`
+	Duration     uint32        `json:"duration" yaml:"duration"` // in number of calendar days
 }
 
 var targetTypes = map[string]fit.WktStepTarget{
