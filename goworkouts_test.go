@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/tormoder/fit"
 )
 
@@ -198,14 +199,16 @@ func TestTrainingPlan(t *testing.T) {
 	day2 := TrainingDay{2, []Workout{w2}}
 	day3 := TrainingDay{4, []Workout{w3}}
 
-	plan := TrainingPlan{[]TrainingDay{day1, day2, day3}, 4}
+	listofdays := []TrainingDay{day1, day2, day3}
+
+	plan := TrainingPlan{uuid.New(), "", "Test Plan", listofdays, 4, "Description"}
 	planJSON, err := json.MarshalIndent(plan, "", "   ")
 	if err != nil {
 		t.Errorf("Could not convert training plan to json")
 	}
 	//	fmt.Println(string(planJSON))
 	//	fmt.Println(len(planJSON))
-	expected := 7549
+	expected := 7674
 	if len(planJSON) != expected {
 		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))
 	}

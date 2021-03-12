@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/tormoder/fit"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -81,8 +83,26 @@ type TrainingDay struct {
 
 // TrainingPlan is a training plan
 type TrainingPlan struct {
+	ID           uuid.UUID     `json:"ID" yaml:"ID"`
+	Filename     string        `json:"filename" yaml:"filename"`
+	Name         string        `json:"name" yaml:"name"`
 	TrainingDays []TrainingDay `json:"trainingDays" yaml:"trainingDays"`
 	Duration     uint32        `json:"duration" yaml:"duration"` // in number of calendar days
+	Description  string        `json:"description" yaml:"description"`
+}
+
+// NewTrainingPlan type for training plans that do not exist yet
+type NewTrainingPlan struct {
+	Filename     string        `json:"filename" yaml:"filename"`
+	Name         string        `json:"name" yaml:"name"`
+	TrainingDays []TrainingDay `json:"trainingDays" yaml:"trainingDays"`
+	Duration     uint32        `json:"duration" yaml:"duration"` // in number of calendar days
+	Description  string        `json:"description" yaml:"description"`
+}
+
+// ListOfPlans storing list of plans
+type ListOfPlans struct {
+	Plans []TrainingPlan `json:"plans" yaml:"plans"`
 }
 
 var targetTypes = map[string]fit.WktStepTarget{
