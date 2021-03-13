@@ -12,7 +12,7 @@ import (
 )
 
 func TestRowsandallFit(t *testing.T) {
-	w, err := ReadFit("testdata/session.fit")
+	w, err := ReadFit("testdata/fitsdk/session.fit")
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
 	}
