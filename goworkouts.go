@@ -16,7 +16,7 @@ import (
 )
 
 // WorkoutStep is the container of a Workout Step
-type workoutStep struct {
+type WorkoutStep struct {
 	MessageIndex          fit.MessageIndex `json:"stepId" yaml:"stepId"`
 	WktStepName           string           `json:"wkt_step_name" yaml:"wkt_step_name"`
 	DurationType          string           `json:"durationType" yaml:"durationType"`
@@ -31,8 +31,8 @@ type workoutStep struct {
 }
 
 // NewWorkoutStep creates new workout step
-func newWorkoutStep() workoutStep {
-	newstep := workoutStep{}
+func newWorkoutStep() WorkoutStep {
+	newstep := WorkoutStep{}
 	newstep.DurationValue = 0
 	newstep.TargetValue = 0
 	newstep.CustomTargetValueLow = 0
@@ -44,7 +44,7 @@ func newWorkoutStep() workoutStep {
 type Workout struct {
 	Filename    string        `json:"filename" yaml:"filename"`
 	Name        string        `json:"workoutName" yaml:"workoutName"`
-	Steps       []workoutStep `json:"steps" yaml:"steps"`
+	Steps       []WorkoutStep `json:"steps" yaml:"steps"`
 	Sport       string        `json:"sport" yaml:"sport"`
 	Description string        `json:"description" yaml:"description"`
 	// WorkoutID uint64         `json:"WorkoutId"`
@@ -173,7 +173,7 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 	workoutmsg := fit.NewWorkoutMsg()
 	workoutmsg.WktName = w.Name
 
-	workoutsteps := []*fit.WorkoutStepMsg{}
+	WorkoutSteps := []*fit.WorkoutStepMsg{}
 
 	for _, step := range w.Steps {
 		newmsg := fit.NewWorkoutStepMsg()
@@ -188,12 +188,12 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 		newmsg.TargetValue = step.TargetValue
 		newmsg.CustomTargetValueLow = step.CustomTargetValueLow
 		newmsg.CustomTargetValueHigh = step.CustomTargetValueHigh
-		workoutsteps = append(workoutsteps, newmsg)
+		WorkoutSteps = append(WorkoutSteps, newmsg)
 	}
 
 	workoutFile := fit.WorkoutFile{}
 	workoutFile.Workout = workoutmsg
-	workoutFile.WorkoutSteps = workoutsteps
+	workoutFile.WorkoutSteps = WorkoutSteps
 
 	newFile, err := fit.NewFile(fit.FileTypeWorkout, h)
 	if err != nil {
@@ -215,7 +215,7 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 // MaxUint maximum int value (default in fit)
 const MaxUint = ^uint32(0)
 
-func makeStep(s *fit.WorkoutStepMsg) (workoutStep, error) {
+func makeStep(s *fit.WorkoutStepMsg) (WorkoutStep, error) {
 	step := newWorkoutStep()
 	step.MessageIndex = s.MessageIndex
 	step.WktStepName = s.WktStepName
@@ -301,7 +301,7 @@ func ReadFit(f string) (Workout, error) {
 	neww := Workout{}
 	neww.Name = w.Workout.WktName
 	neww.Filename = f
-	var newsteps []workoutStep
+	var newsteps []WorkoutStep
 
 	for _, step := range steps {
 		s, err := makeStep(step)
