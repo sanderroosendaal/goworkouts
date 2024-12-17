@@ -313,6 +313,13 @@ func ReadFit(f string) (Workout, error) {
 
 	neww := Workout{}
 	neww.Name = w.Workout.WktName
+	// use sportMapping to get the sport name
+	for k, v := range sportMapping {
+		if v == w.Workout.Sport {
+			neww.Sport = k
+		}
+	}
+
 	neww.Filename = f
 	var newsteps []WorkoutStep
 
