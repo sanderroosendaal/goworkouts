@@ -15,6 +15,18 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Mapping of string-based sport names to fit.Sport values
+var sportMapping = map[string]fit.Sport{
+	"running":   fit.SportRunning,
+	"cycling":   fit.SportCycling,
+	"swimming":  fit.SportSwimming,
+	"walking":   fit.SportWalking,
+	"generic":   fit.SportGeneric,
+	"rowing":    fit.SportRowing,
+	"hiking":    fit.SportHiking,
+	"multi":     fit.SportMultisport,
+}
+
 // WorkoutStep is the container of a Workout Step
 type WorkoutStep struct {
 	MessageIndex          fit.MessageIndex `json:"stepId" yaml:"stepId"`
@@ -172,6 +184,7 @@ func (w *Workout) ToFIT() (*fit.File, error) {
 
 	workoutmsg := fit.NewWorkoutMsg()
 	workoutmsg.WktName = w.Name
+	workoutmsg.Sport = sportMapping[w.Sport]
 
 	WorkoutSteps := []*fit.WorkoutStepMsg{}
 
