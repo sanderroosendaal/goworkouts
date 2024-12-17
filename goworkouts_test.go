@@ -16,11 +16,11 @@ func TestRowsandallFit(t *testing.T) {
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
 	}
-	wjson, err := w.ToJSON()
+	_, err = w.ToJSON()
 	if err != nil {
 		t.Errorf("Could not convert to JSON")
 	}
-	fmt.Println(string(wjson))
+	// fmt.Println(string(wjson))
 }
 
 func TestReadFit(t *testing.T) {
@@ -60,17 +60,36 @@ func TestDecodeJSONOK2(t *testing.T) {
 
 func TestReadFit3(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutRepeatSteps.fit")
-	wjson, err := w.ToJSON()
+	_, err = w.ToJSON()
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
 	}
-	fmt.Println(string(wjson))
+	// fmt.Println(string(wjson))
 }
 
 func TestReadFit4(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutRepeatGreaterThanStep.fit")
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
+	}
+}
+
+func TestReadFit5(t *testing.T) {
+	w, err := ReadFit("testdata/rowingworkout.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	// test if w.Sport is set correctly
+	if w.Sport != "rowing" {
+		t.Errorf("Sport is not set correctly")
+	}
+	wjson, err := w.ToJSON()
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	// check if the json contains a key "sport" with value "rowing"
+	if !bytes.Contains(wjson, []byte("\"sport\":\"rowing\"")) {
+		t.Errorf("JSON does not contain sport rowing")
 	}
 }
 
