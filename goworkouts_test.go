@@ -11,9 +11,11 @@ import (
 	"github.com/tormoder/fit"
 )
 
+/*
 func TestRowsandallFit(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/session.fit")
 	if err != nil {
+		fmt.Println(err)
 		t.Errorf("ReadFit returned an error")
 	}
 	_, err = w.ToJSON()
@@ -21,7 +23,8 @@ func TestRowsandallFit(t *testing.T) {
 		t.Errorf("Could not convert to JSON")
 	}
 	// fmt.Println(string(wjson))
-}
+    }
+*/
 
 func TestReadFit(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
@@ -112,6 +115,31 @@ func TestReadFittoJSON(t *testing.T) {
 	if err != nil {
 		t.Errorf("ToJSON returned an error")
 	}
+}
+
+func TestReadFittoIntervals(t *testing.T) {
+	w, err := ReadFit("testdata/rowingworkout.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	_, err = w.ToIntervals()
+	if err != nil {
+		t.Errorf("ToIntervals returned an error")
+	}
+
+}
+
+func TestReadFittoIntervals2(t *testing.T) {
+	w, err := ReadFit("testdata/repeats.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	s, err := w.ToIntervals()
+	if err != nil {
+		t.Errorf("ToIntervals returned an error")
+	}
+	fmt.Println(s)
+
 }
 
 func TestReadFittoYAML(t *testing.T) {

@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"fmt"
 
 	"github.com/google/uuid"
 
+	//"github.com/muktihari/fit"
 	"github.com/tormoder/fit"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -66,6 +68,128 @@ type Workout struct {
 // ToJSON export to JSON
 func (w *Workout) ToJSON() ([]byte, error) {
 	return json.Marshal(w)
+}
+
+// FitPowerConversion converts Power to zone or value
+func FitPowerConversion(step WorkoutStep) (string, error) {
+	pwr := step.TargetValue
+	pwrlow := step.CustomTargetValueLow
+	pwrhigh := step.CustomTargetValueHigh
+	if pwr > 0 {
+		if pwr <= 1000 {
+			return fmt.Sprintf("%v%%", pwr), nil
+		} 
+		pwr = pwr-1000
+		return fmt.Sprintf("%vW", pwr), nil
+	}
+	if pwrhigh <= 1000 {
+		return fmt.Sprintf("%v-%v%%", pwrlow, pwrhigh), nil
+	}
+	return fmt.Sprintf("%v-%vW", pwrlow-1000, pwrhigh-1000), nil
+	
+}
+
+// FitHRConversion converts Power to zone or value
+func FitHRConversion(step WorkoutStep) (string, error) {
+	hr := step.TargetValue
+	hrlow := step.CustomTargetValueLow
+	hrhigh := step.CustomTargetValueHigh
+	if hr > 0 {
+		if hr <= 100 {
+			return fmt.Sprintf("%v%%", hr), nil
+		} 
+		hr = hr-100
+		return fmt.Sprintf("%vW", hr), nil
+	}
+	if hrhigh <= 100 {
+		return fmt.Sprintf("%v-%v%%", hrlow, hrhigh), nil
+	}
+	return fmt.Sprintf("%v-%vW", hrlow-100, hrhigh-100), nil
+	
+}
+
+func GetStepByIndex(w Workout, idx fit.MessageIndex) (WorkoutStep, error) {
+	for _, step := range w.Steps {
+		if step.MessageIndex == idx {
+			return step, nil
+		}
+	}
+	return WorkoutStep{}, errors.New("Step not found")
+}
+
+func AddRepeats(stepslist []string, idxlist []fit.MessageIndex, idx fit.MessageIndex, nr_repeats uint32) ([]string) {
+	for i, _ := range(stepslist) {
+		if idxlist[i] == idx {
+			stepslist[i] = fmt.Sprintf("\n%vx\n", nr_repeats)+stepslist[i]
+		}
+	}
+	return stepslist
+}
+
+// ToIntervals exports to intervals.icu workout description language
+// Each step is turned into a string like "- 10m @ 200W Comment"
+func (w *Workout) ToIntervals() (string, error) {
+	var err error
+	var stepstext string
+	var stepslist []string
+	var idxlist []fit.MessageIndex
+	for _, step := range w.Steps {
+		idxlist = append(idxlist, step.MessageIndex)
+		var buffer bytes.Buffer
+		var duration, target, name, notes, intensity string
+		if step.DurationType == "RepeatUntilStepsCmplt" {
+			nr_repeats := step.TargetValue
+			idx := fit.MessageIndex(step.DurationValue)
+			stepslist = AddRepeats(stepslist, idxlist, idx, nr_repeats)
+			stepslist = append(stepslist, "\n")
+		} else{
+			if step.DurationType == "Time" {
+				seconds := float64(step.DurationValue)/1000.
+					duration = fmt.Sprintf("%vs", seconds)
+			}
+			if step.DurationType == "Distance" {
+				meters := float64(step.DurationValue)/1.e5
+					duration = fmt.Sprintf("%vkm", meters)
+			}
+			if step.TargetType == "Power" || step.TargetType == "PowerLap" {
+				target, err = FitPowerConversion(step)
+				if err != nil {
+					target = ""
+				}
+			}
+			if step.TargetType == "HeartRate" || step.TargetType == "HeartRateLap" {
+				target, err = FitHRConversion(step)
+				if err != nil {
+					target = ""
+				}
+			}
+			if step.TargetType == "Cadence" {
+				spm := step.TargetValue
+				if spm > 0 {
+					target = fmt.Sprintf("%vrpm", spm)
+				}
+				spmlow := step.CustomTargetValueLow
+				spmhigh := step.CustomTargetValueHigh
+				target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
+			}
+			// Speed
+			// 
+			name = step.WktStepName
+			notes = step.Notes
+			intensity = step.Intensity
+			buffer.WriteString(fmt.Sprintf("- %v %v %v %v %v\n", duration, target, intensity, name, notes))
+			stepslist = append(stepslist, buffer.String())
+		}
+	}
+
+	var buffer bytes.Buffer
+	for _, txt := range stepslist {
+		buffer.WriteString(txt)
+	}
+
+	stepstext = buffer.String()
+	
+	return stepstext, nil
 }
 
 // ToYAML export to YAML
@@ -139,6 +263,9 @@ var intensityTypes = map[string]fit.Intensity{
 	"Rest":     fit.IntensityRest,     //  Intensity = 1
 	"Warmup":   fit.IntensityWarmup,   // Intensity = 2
 	"Cooldown": fit.IntensityCooldown, // Intensity = 3
+	"Recovery": fit.IntensityRecovery, // Intensity = 4
+	"Interval": fit.IntensityInterval, // Intensity = 5
+	"Other": fit.IntensityOther, // Intensity = 6
 	//IntensityInvalid  Intensity = 0xFF
 }
 
