@@ -183,7 +183,7 @@ func TestWriter(t *testing.T) {
 	}
 	steps := workoutFile.WorkoutSteps
 
-	fmt.Printf("Got %v steps\n", len(steps))
+	// fmt.Printf("Got %v steps\n", len(steps))
 
 	if len(steps) != len(oldSteps) {
 		t.Errorf("Reading back new File got incorrect number of steps. Got %d, wanted %d\n", len(steps), len(oldSteps))
