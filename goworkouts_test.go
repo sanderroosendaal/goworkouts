@@ -40,11 +40,15 @@ func TestReadFit2(t *testing.T) {
 func TestDecodeJSON(t *testing.T) {
 	var wjson string
 	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}]}"
-	_, err := FromJSON(wjson)
+	w, err := FromJSON(wjson)
 	if err != nil {
 		fmt.Println(err.Error())
 		t.Errorf("Got error")
 
+	}
+	// check that w.Sport is rowing
+	if w.Sport != "rowing" {
+		t.Errorf("Sport is not rowing")
 	}
 }
 
