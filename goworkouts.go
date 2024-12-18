@@ -167,10 +167,11 @@ func (w *Workout) ToIntervals() (string, error) {
 				spm := step.TargetValue
 				if spm > 0 {
 					target = fmt.Sprintf("%vrpm", spm)
+				} else {
+					spmlow := step.CustomTargetValueLow
+					spmhigh := step.CustomTargetValueHigh
+					target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
 				}
-				spmlow := step.CustomTargetValueLow
-				spmhigh := step.CustomTargetValueHigh
-				target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
 			}
 			// Speed
 			// 

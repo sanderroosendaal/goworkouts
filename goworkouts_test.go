@@ -134,10 +134,23 @@ func TestReadFittoIntervals2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
 	}
+	_, err = w.ToIntervals()
+	if err != nil {
+		t.Errorf("ToIntervals returned an error")
+	}
+
+}
+
+func TestReadFittoIntervals4(t *testing.T) {
+	w, err := ReadFit("testdata/nestedrepeats.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
 	s, err := w.ToIntervals()
 	if err != nil {
 		t.Errorf("ToIntervals returned an error")
 	}
+
 	fmt.Println(s)
 
 }
