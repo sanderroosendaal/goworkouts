@@ -95,16 +95,12 @@ func FitHRConversion(step WorkoutStep) (string, error) {
 	hrlow := step.CustomTargetValueLow
 	hrhigh := step.CustomTargetValueHigh
 	if hr > 0 {
-		if hr <= 100 {
-			return fmt.Sprintf("%v%%", hr), nil
-		} 
-		hr = hr-100
-		return fmt.Sprintf("%vW", hr), nil
+		return fmt.Sprintf("Z%v HR", hr), nil
 	}
 	if hrhigh <= 100 {
-		return fmt.Sprintf("%v-%v%%", hrlow, hrhigh), nil
+		return fmt.Sprintf("%v-%v%% HR", hrlow, hrhigh), nil
 	}
-	return fmt.Sprintf("%v-%vW", hrlow-100, hrhigh-100), nil
+	return fmt.Sprintf("%v-%v HR", hrlow-100, hrhigh-100), nil
 	
 }
 
