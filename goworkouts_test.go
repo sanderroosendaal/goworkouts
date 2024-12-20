@@ -145,8 +145,8 @@ func TestReadFittoIntervals2(t *testing.T) {
 
 }
 
-func TestReadFittoIntervals4(t *testing.T) {
-	w, err := ReadFit("testdata/nestedrepeats.fit")
+func TestReadFittoIntervals3(t *testing.T) {
+	w, err := ReadFit("testdata/4x15min.fit")
 	if err != nil {
 		t.Errorf("ReadFit returned an error")
 	}
@@ -156,6 +156,18 @@ func TestReadFittoIntervals4(t *testing.T) {
 	}
 
 	fmt.Println(s)
+
+}
+
+func TestReadFittoIntervals4(t *testing.T) {
+	w, err := ReadFit("testdata/nestedrepeats.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	_, err = w.ToIntervals()
+	if err != nil {
+		t.Errorf("ToIntervals returned an error")
+	}
 
 }
 
