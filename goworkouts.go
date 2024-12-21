@@ -75,12 +75,9 @@ func FitPowerConversion(step WorkoutStep) (string, error) {
 	pwr := step.TargetValue
 	pwrlow := step.CustomTargetValueLow
 	pwrhigh := step.CustomTargetValueHigh
+	// pwr is a zone setting
 	if pwr > 0 {
-		if pwr <= 1000 {
-			return fmt.Sprintf("%v%%", pwr), nil
-		} 
-		pwr = pwr-1000
-		return fmt.Sprintf("%vW", pwr), nil
+		return fmt.Sprintf("Z%v", pwr), nil
 	}
 	if pwrhigh <= 1000 {
 		return fmt.Sprintf("%v-%v%%", pwrlow, pwrhigh), nil
