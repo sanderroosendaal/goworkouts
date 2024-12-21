@@ -167,10 +167,10 @@ func (w *Workout) ToIntervals() (string, error) {
 				}
 			}
 			if step.Intensity == "Warmup" {
-				prefix = "Warmup\n"
+				prefix = "\nWarmup\n"
 			}
 			if step.Intensity == "Cooldown" {
-				prefix = "Cooldown\n"
+				prefix = "\nCooldown\n"
 			}
 			// Speed
 			// 
