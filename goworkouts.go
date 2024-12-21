@@ -132,7 +132,7 @@ func (w *Workout) ToIntervals() (string, error) {
 	for _, step := range w.Steps {
 		idxlist = append(idxlist, step.MessageIndex)
 		var buffer bytes.Buffer
-		var duration, target, name, notes, intensity string
+		var prefix, duration, target, name, notes, intensity string
 		if step.DurationType == "RepeatUntilStepsCmplt" {
 			nr_repeats := step.TargetValue
 			idx := fit.MessageIndex(step.DurationValue)
@@ -169,12 +169,18 @@ func (w *Workout) ToIntervals() (string, error) {
 					target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
 				}
 			}
+			if step.Intensity == "Warmup" {
+				prefix = "Warmup\n"
+			}
+			if step.Intensity == "Cooldown" {
+				prefix = "Cooldown\n"
+			}
 			// Speed
 			// 
 			name = step.WktStepName
 			notes = step.Notes
 			intensity = step.Intensity
-			buffer.WriteString(fmt.Sprintf("- %v %v %v %v %v\n", duration, target, intensity, name, notes))
+			buffer.WriteString(fmt.Sprintf("%v- %v %v %v %v %v\n", prefix, duration, target, intensity, name, notes))
 			stepslist = append(stepslist, buffer.String())
 		}
 	}
