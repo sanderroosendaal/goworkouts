@@ -11,7 +11,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/tormoder/fit"
+	//"github.com/tormoder/fit"
+	"github.com/muktihari/fit/encoder"
+	"github.com/muktihari/fit/decoder"
+	"github.com/multihari/fit/profile"
+	"github.com/multihari/fit/profile/typedef"
 	yaml "gopkg.in/yaml.v2"
 )
 
