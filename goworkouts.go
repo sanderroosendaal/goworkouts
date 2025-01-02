@@ -9,6 +9,9 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -123,6 +126,71 @@ func AddRepeats(stepslist []string, idxlist []fit.MessageIndex, idx fit.MessageI
 	return stepslist
 }
 
+// Helper function for ToIntervals
+func TransformRepeats(input string) string {
+	lines := strings.Split(input, "\n")
+	re := regexp.MustCompile(`^(\d+)x$`)
+	i := 0
+	var result []string
+	
+	for i < len(lines) {
+		stopped := false
+		multiplier := 1
+		currentLine := strings.TrimSpace(lines[i])
+		// Preserve empty lines but skip them for merging logic
+		if currentLine == "" {
+			result = append(result, "")
+			i++
+			continue
+		}
+		currentMatch := re.FindStringSubmatch(currentLine)
+		if currentMatch == nil {
+			result = append(result, strings.TrimSpace(lines[i]))
+			i++
+			continue
+		}
+		// Still here, we have a match. Need to update multiplier and scan next line(s)
+		multiplier, _ = strconv.Atoi(currentMatch[1])
+		for {
+			if i+1 < len(lines) {
+				// loop until non-empty line found
+				nextLine := ""
+				for {
+					nextLine = strings.TrimSpace(lines[i+1])
+					if nextLine != "" {
+						break
+					}
+					i++
+					if i+1 >= len(lines) {
+						break
+					}
+				}
+				// check if it matches a repeat step
+				nextMatch := re.FindStringSubmatch(nextLine)
+				if nextMatch == nil {
+					result = append(result, fmt.Sprintf("\n%dx", multiplier))
+					result = append(result, strings.TrimSpace(nextLine))
+					i += 2
+					multiplier = 1
+					stopped = true
+				}
+				if nextMatch != nil { // found a multiplier
+					n, _ := strconv.Atoi(nextMatch[1])
+					multiplier *= n
+					i++
+				}
+				if stopped {
+					multiplier = 1
+					break
+				}
+			}
+		}
+		//i++
+	}
+			
+	return strings.Join(result, "\n")
+}
+
 // ToIntervals exports to intervals.icu workout description language
 // Each step is turned into a string like "- 10m @ 200W Comment"
 func (w *Workout) ToIntervals() (string, error) {
@@ -172,9 +240,19 @@ func (w *Workout) ToIntervals() (string, error) {
 			}
 			if step.Intensity == "Warmup" {
 				prefix = "\nWarmup\n"
+				target = "ramp Z1-Z2"
 			}
 			if step.Intensity == "Cooldown" {
 				prefix = "\nCooldown\n"
+				target = "ramp Z2-Z1"
+			}
+
+			if step.Intensity == "Recovery" {
+				target = "Z1"
+			}
+
+			if step.Intensity == "Rest" {
+				target = "Z1"
 			}
 			// Speed
 			// 
@@ -192,6 +270,7 @@ func (w *Workout) ToIntervals() (string, error) {
 	}
 
 	stepstext = buffer.String()
+	stepstext = TransformRepeats(stepstext)
 	
 	return stepstext, nil
 }

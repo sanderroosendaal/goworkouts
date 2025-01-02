@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/tormoder/fit"
@@ -25,6 +26,34 @@ func TestRowsandallFit(t *testing.T) {
 	// fmt.Println(string(wjson))
     }
 */
+
+func TestMultipleRepeatReplacement(t *testing.T) {
+	input := "\n3x\n\n4x\n\n5x\nhello\nrest\n\n6x\n\n7x\n"
+	output_obtained := strings.TrimSpace(TransformRepeats(input))
+	output_wanted := strings.TrimSpace("\n\n60x\nhello\nrest\n\n\n42x\n")
+	if strings.TrimSpace(output_obtained) != strings.TrimSpace(output_wanted) {
+		fmt.Println(len(output_obtained), len(output_wanted))
+		t.Errorf("\n\nGot:\n-----\n%s\n---\n\nWanted:\n---\n%s\n---\n", output_obtained, output_wanted)
+	}
+}
+
+
+func TestMultipleRepeats(t *testing.T) {
+	w, err := ReadFit("testdata/nestedrepeats2.fit")
+	got, err := w.ToIntervals()
+	got = strings.TrimSpace(got)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("TestMultipleRepeats returned an error")
+	}
+	want := "\nWarmup\n- 600s ramp Z1-Z2 Warmup w10 Warming up 10 minutes\n\n\n24x\n- 45s Z5 Active 45sec Sprint for 45 seconds\n- 75s Z1 Rest r75\n\n\n\nCooldown\n- 600s ramp Z2-Z1 Cooldown cd10\n"
+	want = strings.TrimSpace(want)
+	if got != want {
+		fmt.Println(len(got), len(want))
+		t.Errorf("\nWanted:\n-----\n%s\n---\n\nGot:\n---\n%s\n---\n", want, got)
+	}
+}
+
 
 func TestReadFit(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
@@ -148,14 +177,16 @@ func TestReadFittoIntervals2(t *testing.T) {
 func TestReadFittoIntervals3(t *testing.T) {
 	w, err := ReadFit("testdata/4x15min.fit")
 	if err != nil {
+		fmt.Println(err)
 		t.Errorf("ReadFit returned an error")
 	}
-	s, err := w.ToIntervals()
+	_, err = w.ToIntervals()
 	if err != nil {
+		fmt.Println(err)
 		t.Errorf("ToIntervals returned an error")
 	}
 
-	fmt.Println(s)
+	// fmt.Println(s)
 
 }
 
@@ -289,3 +320,4 @@ func TestTrainingPlan(t *testing.T) {
 		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))
 	}
 }
+
