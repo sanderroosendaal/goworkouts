@@ -19,14 +19,18 @@ import (
 
 // Mapping of string-based sport names to fit.Sport values
 var sportMapping = map[string]fit.Sport{
+	"generic":   fit.SportGeneric,
 	"running":   fit.SportRunning,
 	"cycling":   fit.SportCycling,
 	"swimming":  fit.SportSwimming,
 	"walking":   fit.SportWalking,
-	"generic":   fit.SportGeneric,
+	"crosscountryski": fit.SportCrossCountrySkiing,
 	"rowing":    fit.SportRowing,
 	"hiking":    fit.SportHiking,
 	"multi":     fit.SportMultisport,
+	"inlineskate": fit.SportInlineSkating,
+	"iceskate": fit.SportIceSkating,
+	"hitt": fit.SportHiit,
 }
 
 // WorkoutStep is the container of a Workout Step
