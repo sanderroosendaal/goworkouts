@@ -2,38 +2,50 @@ package goworkouts
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+
 	"os"
-	"time"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
-	//"github.com/tormoder/fit"
 	"github.com/muktihari/fit/encoder"
 	"github.com/muktihari/fit/decoder"
-	"github.com/multihari/fit/profile"
-	"github.com/multihari/fit/profile/typedef"
+	//"github.com/muktihari/fit/profile"
+	//"github.com/muktihari/fit/profile/untyped/fieldnum"
+	"github.com/muktihari/fit/profile/typedef"
+	"github.com/muktihari/fit/profile/filedef"
+	"github.com/muktihari/fit/profile/mesgdef"
+	"github.com/muktihari/fit/proto"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Mapping of string-based sport names to fit.Sport values
-var sportMapping = map[string]fit.Sport{
-	"running":   fit.SportRunning,
-	"cycling":   fit.SportCycling,
-	"swimming":  fit.SportSwimming,
-	"walking":   fit.SportWalking,
-	"generic":   fit.SportGeneric,
-	"rowing":    fit.SportRowing,
-	"hiking":    fit.SportHiking,
-	"multi":     fit.SportMultisport,
+
+var sportMapping = map[string]typedef.Sport{
+	"generic":   typedef.SportGeneric,
+	"running":   typedef.SportRunning,
+	"cycling":   typedef.SportCycling,
+	"swimming":  typedef.SportSwimming,
+	"walking":   typedef.SportWalking,
+	"crosscountryski": typedef.SportCrossCountrySkiing,
+	"rowing":    typedef.SportRowing,
+	"hiking":    typedef.SportHiking,
+	"multi":     typedef.SportMultisport,
+	"inlineskate": typedef.SportInlineSkating,
+	"iceskate": typedef.SportIceSkating,
+	"hitt": typedef.SportHiit,
 }
+
 
 // WorkoutStep is the container of a Workout Step
 type WorkoutStep struct {
-	MessageIndex          fit.MessageIndex `json:"stepId" yaml:"stepId"`
+	MessageIndex          typedef.MessageIndex `json:"stepId" yaml:"stepId"`
 	WktStepName           string           `json:"wkt_step_name" yaml:"wkt_step_name"`
 	DurationType          string           `json:"durationType" yaml:"durationType"`
 	DurationValue         uint32           `json:"durationValue" yaml:"durationValue"`
@@ -70,6 +82,204 @@ type Workout struct {
 // ToJSON export to JSON
 func (w *Workout) ToJSON() ([]byte, error) {
 	return json.Marshal(w)
+}
+
+// FitPowerConversion converts Power to zone or value
+func FitPowerConversion(step WorkoutStep) (string, error) {
+	pwr := step.TargetValue
+	pwrlow := step.CustomTargetValueLow
+	pwrhigh := step.CustomTargetValueHigh
+	// pwr is a zone setting
+	if pwr > 0 {
+		return fmt.Sprintf("Z%v", pwr), nil
+	}
+	if pwrhigh <= 1000 {
+		return fmt.Sprintf("%v-%v%%", pwrlow, pwrhigh), nil
+	}
+	return fmt.Sprintf("%v-%vW", pwrlow-1000, pwrhigh-1000), nil
+	
+}
+
+// FitHRConversion converts Power to zone or value
+func FitHRConversion(step WorkoutStep) (string, error) {
+	hr := step.TargetValue
+	hrlow := step.CustomTargetValueLow
+	hrhigh := step.CustomTargetValueHigh
+	if hr > 0 {
+		return fmt.Sprintf("Z%v HR", hr), nil
+	}
+	if hrhigh <= 100 {
+		return fmt.Sprintf("%v-%v%% HR", hrlow, hrhigh), nil
+	}
+	return fmt.Sprintf("%v-%v HR", hrlow-100, hrhigh-100), nil
+	
+}
+
+func GetStepByIndex(w Workout, idx typedef.MessageIndex) (WorkoutStep, error) {
+	for _, step := range w.Steps {
+		if step.MessageIndex == idx {
+			return step, nil
+		}
+	}
+	return WorkoutStep{}, errors.New("Step not found")
+}
+
+func AddRepeats(stepslist []string, idxlist []typedef.MessageIndex, idx typedef.MessageIndex, nr_repeats uint32) ([]string) {
+	for i, _ := range(stepslist) {
+		if idxlist[i] == idx {
+			stepslist[i] = fmt.Sprintf("\n%vx\n", nr_repeats)+stepslist[i]
+		}
+	}
+	return stepslist
+}
+
+// Helper function for ToIntervals
+func TransformRepeats(input string) string {
+	lines := strings.Split(input, "\n")
+	re := regexp.MustCompile(`^(\d+)x$`)
+	i := 0
+	var result []string
+	
+	for i < len(lines) {
+		stopped := false
+		multiplier := 1
+		currentLine := strings.TrimSpace(lines[i])
+		// Preserve empty lines but skip them for merging logic
+		if currentLine == "" {
+			result = append(result, "")
+			i++
+			continue
+		}
+		currentMatch := re.FindStringSubmatch(currentLine)
+		if currentMatch == nil {
+			result = append(result, strings.TrimSpace(lines[i]))
+			i++
+			continue
+		}
+		// Still here, we have a match. Need to update multiplier and scan next line(s)
+		multiplier, _ = strconv.Atoi(currentMatch[1])
+		for {
+			if i+1 < len(lines) {
+				// loop until non-empty line found
+				nextLine := ""
+				for {
+					nextLine = strings.TrimSpace(lines[i+1])
+					if nextLine != "" {
+						break
+					}
+					i++
+					if i+1 >= len(lines) {
+						break
+					}
+				}
+				// check if it matches a repeat step
+				nextMatch := re.FindStringSubmatch(nextLine)
+				if nextMatch == nil {
+					result = append(result, fmt.Sprintf("\n%dx", multiplier))
+					result = append(result, strings.TrimSpace(nextLine))
+					i += 2
+					multiplier = 1
+					stopped = true
+				}
+				if nextMatch != nil { // found a multiplier
+					n, _ := strconv.Atoi(nextMatch[1])
+					multiplier *= n
+					i++
+				}
+				if stopped {
+					multiplier = 1
+					break
+				}
+			}
+		}
+		//i++
+	}
+			
+	return strings.Join(result, "\n")
+}
+
+// ToIntervals exports to intervals.icu workout description language
+// Each step is turned into a string like "- 10m @ 200W Comment"
+func (w *Workout) ToIntervals() (string, error) {
+	var err error
+	var stepstext string
+	var stepslist []string
+	var idxlist []typedef.MessageIndex
+	for _, step := range w.Steps {
+		idxlist = append(idxlist, step.MessageIndex)
+		var buffer bytes.Buffer
+		var prefix, duration, target, name, notes, intensity string
+		if step.DurationType == "RepeatUntilStepsCmplt" {
+			nr_repeats := step.TargetValue
+			idx := typedef.MessageIndex(step.DurationValue)
+			stepslist = AddRepeats(stepslist, idxlist, idx, nr_repeats)
+			stepslist = append(stepslist, "\n")
+		} else{
+			if step.DurationType == "Time" {
+				seconds := float64(step.DurationValue)/1000.
+					duration = fmt.Sprintf("%vs", seconds)
+			}
+			if step.DurationType == "Distance" {
+				meters := float64(step.DurationValue)/1.e5
+					duration = fmt.Sprintf("%vkm", meters)
+			}
+			if step.TargetType == "Power" || step.TargetType == "PowerLap" {
+				target, err = FitPowerConversion(step)
+				if err != nil {
+					target = ""
+				}
+			}
+			if step.TargetType == "HeartRate" || step.TargetType == "HeartRateLap" {
+				target, err = FitHRConversion(step)
+				if err != nil {
+					target = ""
+				}
+			}
+			if step.TargetType == "Cadence" {
+				spm := step.TargetValue
+				if spm > 0 {
+					target = fmt.Sprintf("%vrpm", spm)
+				} else {
+					spmlow := step.CustomTargetValueLow
+					spmhigh := step.CustomTargetValueHigh
+					target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
+				}
+			}
+			if step.Intensity == "Warmup" {
+				prefix = "\nWarmup\n"
+				target = "ramp Z1-Z2"
+			}
+			if step.Intensity == "Cooldown" {
+				prefix = "\nCooldown\n"
+				target = "ramp Z2-Z1"
+			}
+
+			if step.Intensity == "Recovery" {
+				target = "Z1"
+			}
+
+			if step.Intensity == "Rest" {
+				target = "Z1"
+			}
+			// Speed
+			// 
+			name = step.WktStepName
+			notes = step.Notes
+			intensity = step.Intensity
+			buffer.WriteString(fmt.Sprintf("%v- %v %v %v %v %v\n", prefix, duration, target, intensity, name, notes))
+			stepslist = append(stepslist, buffer.String())
+		}
+	}
+
+	var buffer bytes.Buffer
+	for _, txt := range stepslist {
+		buffer.WriteString(txt)
+	}
+
+	stepstext = buffer.String()
+	stepstext = TransformRepeats(stepstext)
+	
+	return stepstext, nil
 }
 
 // ToYAML export to YAML
@@ -121,118 +331,113 @@ type ListOfPlans struct {
 	Plans []TrainingPlan `json:"plans" yaml:"plans"`
 }
 
-var targetTypes = map[string]fit.WktStepTarget{
-	"Speed":        fit.WktStepTargetSpeed,        //        WktStepTarget = 0
-	"HeartRate":    fit.WktStepTargetHeartRate,    //    WktStepTarget = 1
-	"Open":         fit.WktStepTargetOpen,         //         WktStepTarget = 2
-	"Cadence":      fit.WktStepTargetCadence,      //      WktStepTarget = 3
-	"Power":        fit.WktStepTargetPower,        //        WktStepTarget = 4
-	"Grade":        fit.WktStepTargetGrade,        //        WktStepTarget = 5
-	"Resistance":   fit.WktStepTargetResistance,   //   WktStepTarget = 6
-	"Power3s":      fit.WktStepTargetPower3s,      //   WktStepTarget = 7
-	"Power10s":     fit.WktStepTargetPower10s,     //    WktStepTarget = 8
-	"Power30s":     fit.WktStepTargetPower30s,     //   WktStepTarget = 9
-	"PowerLap":     fit.WktStepTargetPowerLap,     //   WktStepTarget = 10
-	"SwimStroke":   fit.WktStepTargetSwimStroke,   //  WktStepTarget = 11
-	"SpeedLap":     fit.WktStepTargetSpeedLap,     // WktStepTarget = 12
-	"HeartRateLap": fit.WktStepTargetHeartRateLap, // WktStepTarget = 13
+var targetTypes = map[string]typedef.WktStepTarget{
+	"Speed":        typedef.WktStepTargetSpeed,        //        WktStepTarget = 0
+	"HeartRate":    typedef.WktStepTargetHeartRate,    //    WktStepTarget = 1
+	"Open":         typedef.WktStepTargetOpen,         //         WktStepTarget = 2
+	"Cadence":      typedef.WktStepTargetCadence,      //      WktStepTarget = 3
+	"Power":        typedef.WktStepTargetPower,        //        WktStepTarget = 4
+	"Grade":        typedef.WktStepTargetGrade,        //        WktStepTarget = 5
+	"Resistance":   typedef.WktStepTargetResistance,   //   WktStepTarget = 6
+	"Power3s":      typedef.WktStepTargetPower3S,      //   WktStepTarget = 7
+	"Power10s":     typedef.WktStepTargetPower10S,     //    WktStepTarget = 8
+	"Power30s":     typedef.WktStepTargetPower30S,     //   WktStepTarget = 9
+	"PowerLap":     typedef.WktStepTargetPowerLap,     //   WktStepTarget = 10
+	"SwimStroke":   typedef.WktStepTargetSwimStroke,   //  WktStepTarget = 11
+	"SpeedLap":     typedef.WktStepTargetSpeedLap,     // WktStepTarget = 12
+	"HeartRateLap": typedef.WktStepTargetHeartRateLap, // WktStepTarget = 13
 }
 
-var intensityTypes = map[string]fit.Intensity{
-	"Active":   fit.IntensityActive,   //   Intensity = 0
-	"Rest":     fit.IntensityRest,     //  Intensity = 1
-	"Warmup":   fit.IntensityWarmup,   // Intensity = 2
-	"Cooldown": fit.IntensityCooldown, // Intensity = 3
+var intensityTypes = map[string]typedef.Intensity{
+	"Active":   typedef.IntensityActive,   //   Intensity = 0
+	"Rest":     typedef.IntensityRest,     //  Intensity = 1
+	"Warmup":   typedef.IntensityWarmup,   // Intensity = 2
+	"Cooldown": typedef.IntensityCooldown, // Intensity = 3
+	"Recovery": typedef.IntensityRecovery, // Intensity = 4
+	"Interval": typedef.IntensityInterval, // Intensity = 5
+	"Other": typedef.IntensityOther, // Intensity = 6
 	//IntensityInvalid  Intensity = 0xFF
 }
 
-var durationTypes = map[string]fit.WktStepDuration{
-	"Time":                               fit.WktStepDurationTime,
-	"Distance":                           fit.WktStepDurationDistance,
-	"HrLessThan":                         fit.WktStepDurationHrLessThan,                      //                         // WktStepDuration = 2
-	"HrGreaterThan":                      fit.WktStepDurationHrGreaterThan,                   //                      // WktStepDuration = 3
-	"Calories":                           fit.WktStepDurationCalories,                        //                           // WktStepDuration = 4
-	"Open":                               fit.WktStepDurationOpen,                            //                               // WktStepDuration = 5
-	"RepeatUntilStepsCmplt":              fit.WktStepDurationRepeatUntilStepsCmplt,           // WktStepDuration = 6
-	"RepeatUntilTime":                    fit.WktStepDurationRepeatUntilTime,                 // WktStepDuration = 7
-	"RepeatUntilDistance":                fit.WktStepDurationRepeatUntilDistance,             // WktStepDuration = 8
-	"RepeatUntilCalories":                fit.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 9
-	"RepeatUntilHrLessThan":              fit.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 10
-	"RepeatUntilHrGreaterThan":           fit.WktStepDurationRepeatUntilHrGreaterThan,        // WktStepDuration = 11
-	"RepeatUntilPowerLessThan":           fit.WktStepDurationRepeatUntilPowerLessThan,        // WktStepDuration = 12
-	"RepeatUntilPowerGreaterThan":        fit.WktStepDurationRepeatUntilPowerGreaterThan,     // WktStepDuration = 13
-	"PowerLessThan":                      fit.WktStepDurationPowerLessThan,                   // WktStepDuration = 14
-	"PowerGreaterThan":                   fit.WktStepDurationPowerGreaterThan,                // WktStepDuration = 15
-	"TrainingPeaksTss":                   fit.WktStepDurationTrainingPeaksTss,                // WktStepDuration = 16
-	"RepeatUntilPowerLastLapLessThan":    fit.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 17
-	"RepeatUntilMaxPowerLastLapLessThan": fit.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 18
-	"Power3sLessThan":                    fit.WktStepDurationPower3sLessThan,                 // WktStepDuration = 19
-	"Power10sLessThan":                   fit.WktStepDurationPower10sLessThan,                // WktStepDuration = 20
-	"Power30sLessThan":                   fit.WktStepDurationPower30sLessThan,                // WktStepDuration = 21
-	"Power3sGreaterThan":                 fit.WktStepDurationPower3sGreaterThan,              // WktStepDuration = 22
-	"Power10sGreaterThan":                fit.WktStepDurationPower10sGreaterThan,             // WktStepDuration = 23
-	"Power30sGreaterThan":                fit.WktStepDurationPower30sGreaterThan,             // WktStepDuration = 24
-	"PowerLapLessThan":                   fit.WktStepDurationPowerLapLessThan,                // WktStepDuration = 25
-	"PowerLapGreaterThan":                fit.WktStepDurationPowerLapGreaterThan,             // WktStepDuration = 26
-	"RepeatUntilTrainingPeaksTss":        fit.WktStepDurationRepeatUntilTrainingPeaksTss,     // WktStepDuration = 27
-	"RepetitionTime":                     fit.WktStepDurationRepetitionTime,                  // WktStepDuration = 28
-	"Reps":                               fit.WktStepDurationReps,                            // WktStepDuration = 29
-	"TimeOnly":                           fit.WktStepDurationTimeOnly,                        // WktStepDuration = 31
+var durationTypes = map[string]typedef.WktStepDuration{
+	"Time":                               typedef.WktStepDurationTime,
+	"Distance":                           typedef.WktStepDurationDistance,
+	"HrLessThan":                         typedef.WktStepDurationHrLessThan,                      //                         // WktStepDuration = 2
+	"HrGreaterThan":                      typedef.WktStepDurationHrGreaterThan,                   //                      // WktStepDuration = 3
+	"Calories":                           typedef.WktStepDurationCalories,                        //                           // WktStepDuration = 4
+	"Open":                               typedef.WktStepDurationOpen,                            //                               // WktStepDuration = 5
+	"RepeatUntilStepsCmplt":              typedef.WktStepDurationRepeatUntilStepsCmplt,           // WktStepDuration = 6
+	"RepeatUntilTime":                    typedef.WktStepDurationRepeatUntilTime,                 // WktStepDuration = 7
+	"RepeatUntilDistance":                typedef.WktStepDurationRepeatUntilDistance,             // WktStepDuration = 8
+	"RepeatUntilCalories":                typedef.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 9
+	"RepeatUntilHrLessThan":              typedef.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 10
+	"RepeatUntilHrGreaterThan":           typedef.WktStepDurationRepeatUntilHrGreaterThan,        // WktStepDuration = 11
+	"RepeatUntilPowerLessThan":           typedef.WktStepDurationRepeatUntilPowerLessThan,        // WktStepDuration = 12
+	"RepeatUntilPowerGreaterThan":        typedef.WktStepDurationRepeatUntilPowerGreaterThan,     // WktStepDuration = 13
+	"PowerLessThan":                      typedef.WktStepDurationPowerLessThan,                   // WktStepDuration = 14
+	"PowerGreaterThan":                   typedef.WktStepDurationPowerGreaterThan,                // WktStepDuration = 15
+	"TrainingPeaksTss":                   typedef.WktStepDurationTrainingPeaksTss,                // WktStepDuration = 16
+	"RepeatUntilPowerLastLapLessThan":    typedef.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 17
+	"RepeatUntilMaxPowerLastLapLessThan": typedef.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 18
+	"Power3sLessThan":                    typedef.WktStepDurationPower3SLessThan,                 // WktStepDuration = 19
+	"Power10sLessThan":                   typedef.WktStepDurationPower10SLessThan,                // WktStepDuration = 20
+	"Power30sLessThan":                   typedef.WktStepDurationPower30SLessThan,                // WktStepDuration = 21
+	"Power3sGreaterThan":                 typedef.WktStepDurationPower3SGreaterThan,              // WktStepDuration = 22
+	"Power10sGreaterThan":                typedef.WktStepDurationPower10SGreaterThan,             // WktStepDuration = 23
+	"Power30sGreaterThan":                typedef.WktStepDurationPower30SGreaterThan,             // WktStepDuration = 24
+	"PowerLapLessThan":                   typedef.WktStepDurationPowerLapLessThan,                // WktStepDuration = 25
+	"PowerLapGreaterThan":                typedef.WktStepDurationPowerLapGreaterThan,             // WktStepDuration = 26
+	"RepeatUntilTrainingPeaksTss":        typedef.WktStepDurationRepeatUntilTrainingPeaksTss,     // WktStepDuration = 27
+	"RepetitionTime":                     typedef.WktStepDurationRepetitionTime,                  // WktStepDuration = 28
+	"Reps":                               typedef.WktStepDurationReps,                            // WktStepDuration = 29
+	"TimeOnly":                           typedef.WktStepDurationTimeOnly,                        // WktStepDuration = 31
 	//"Invalid":                            31,                               // WktStepDuration = 0xFF
 }
 
 // ToFIT exports to FIT
-// only creates empty FIT object for now
-func (w *Workout) ToFIT() (*fit.File, error) {
-	h := fit.NewHeader(fit.V10, true)
+func (w *Workout) ToFIT() (proto.FIT, error) {
 
-	workoutmsg := fit.NewWorkoutMsg()
-	workoutmsg.WktName = w.Name
-	workoutmsg.Sport = sportMapping[w.Sport]
 
-	WorkoutSteps := []*fit.WorkoutStepMsg{}
+	WorkoutSteps := []*mesgdef.WorkoutStep{}
 
 	for _, step := range w.Steps {
-		newmsg := fit.NewWorkoutStepMsg()
+		newstep := mesgdef.NewWorkoutStep(nil)
 
-		newmsg.MessageIndex = step.MessageIndex
-		newmsg.WktStepName = step.WktStepName
-		newmsg.DurationType = durationTypes[step.DurationType]
-		newmsg.DurationValue = step.DurationValue
-		newmsg.Intensity = intensityTypes[step.Intensity]
-		newmsg.Notes = step.Notes
-		newmsg.TargetType = targetTypes[step.TargetType]
-		newmsg.TargetValue = step.TargetValue
-		newmsg.CustomTargetValueLow = step.CustomTargetValueLow
-		newmsg.CustomTargetValueHigh = step.CustomTargetValueHigh
-		WorkoutSteps = append(WorkoutSteps, newmsg)
+		newstep.MessageIndex = step.MessageIndex
+		newstep.WktStepName = step.WktStepName
+		newstep.DurationType = durationTypes[step.DurationType]
+		newstep.DurationValue = step.DurationValue
+		newstep.Intensity = intensityTypes[step.Intensity]
+		newstep.Notes = step.Notes
+		newstep.TargetType = targetTypes[step.TargetType]
+		newstep.TargetValue = step.TargetValue
+		newstep.CustomTargetValueLow = step.CustomTargetValueLow
+		newstep.CustomTargetValueHigh = step.CustomTargetValueHigh
+		WorkoutSteps = append(WorkoutSteps, newstep)
 	}
 
-	workoutFile := fit.WorkoutFile{}
-	workoutFile.Workout = workoutmsg
-	workoutFile.WorkoutSteps = WorkoutSteps
-
-	newFile, err := fit.NewFile(fit.FileTypeWorkout, h)
-	if err != nil {
-		return newFile, err
+	workout := filedef.NewWorkout()
+	workout.FileId = *mesgdef.NewFileId(nil).
+		SetType(typedef.FileWorkout)
+	
+	fitw := mesgdef.NewWorkout(nil)
+	fitw.SetWktName(w.Name)
+	fitw.SetSport(sportMapping[w.Sport])
+	workoutmsg := fitw.ToMesg(nil)
+	
+	workout.Add(workoutmsg)
+	for _, wktstep := range WorkoutSteps {
+		workout.Add(wktstep.ToMesg(nil))
 	}
 
-	newFile.FileId.TimeCreated = time.Now()
-	newFile.FileId.Manufacturer = fit.ManufacturerGarmin
-	newFileWorkoutFile, err := newFile.Workout()
-	if err != nil {
-		return newFile, err
-	}
 
-	*newFileWorkoutFile = workoutFile
-
-	return newFile, nil
+	return workout.ToFIT(nil), nil
 }
 
 // MaxUint maximum int value (default in fit)
 const MaxUint = ^uint32(0)
 
-func makeStep(s *fit.WorkoutStepMsg) (WorkoutStep, error) {
+func makeStep(s *mesgdef.WorkoutStep) (WorkoutStep, error) {
 	step := newWorkoutStep()
 	step.MessageIndex = s.MessageIndex
 	step.WktStepName = s.WktStepName
@@ -266,7 +471,7 @@ func exists(name string) bool {
 }
 
 // WriteFit writes FIT file from Workout
-func WriteFit(f string, w *fit.File, overwrite bool) (ok bool, err error) {
+func WriteFit(f string, w *proto.FIT, overwrite bool) (ok bool, err error) {
 	if exists(f) && !overwrite {
 		err := errors.New("File exists and overwrite was set to false")
 		return false, err
@@ -277,10 +482,8 @@ func WriteFit(f string, w *fit.File, overwrite bool) (ok bool, err error) {
 	}
 	defer fitFile.Close()
 
-	bo := binary.LittleEndian
-
-	err = fit.Encode(fitFile, w, bo)
-	if err != nil {
+	enc := encoder.New(fitFile)
+	if err := enc.Encode(&w); err != nil {
 		return false, err
 	}
 
@@ -289,31 +492,33 @@ func WriteFit(f string, w *fit.File, overwrite bool) (ok bool, err error) {
 
 // ReadFit Read FIT file
 func ReadFit(f string) (Workout, error) {
-	data, err := ioutil.ReadFile(f)
+	fitFile, err := os.Open(f)
+	if err != nil {
+		return Workout{}, err
+	}
+	defer fitFile.Close()
+	
+	lis := filedef.NewListener()
+	defer lis.Close()
+	
+	dec := decoder.New(fitFile,
+		decoder.WithMesgListener(lis),
+		decoder.WithBroadcastOnly(),
+	)
+	_, err = dec.Decode()
 	if err != nil {
 		return Workout{}, err
 	}
 
-	fitf, err := fit.Decode(bytes.NewReader(data))
-	if err != nil {
-		return Workout{}, err
-	}
-
-	fittype := fitf.FileId.Type
-
-	if fittype != fit.FileTypeWorkout {
+	fitf, ok := lis.File().(*filedef.Workout)
+	
+	if !ok {
 		return Workout{}, errors.New("We only accept fit files of type Workout")
 	}
 
-	w, err := fitf.Workout()
-	if err != nil {
-		return Workout{}, err
-	}
+	w := fitf.Workout
 
-	steps := w.WorkoutSteps
-	if err != nil {
-		return Workout{}, err
-	}
+	steps := fitf.WorkoutSteps
 
 	neww := Workout{}
 	neww.Name = w.Workout.WktName
