@@ -483,7 +483,7 @@ func WriteFit(f string, w *proto.FIT, overwrite bool) (ok bool, err error) {
 	defer fitFile.Close()
 
 	enc := encoder.New(fitFile)
-	if err := enc.Encode(&w); err != nil {
+	if err := enc.Encode(w); err != nil {
 		return false, err
 	}
 
@@ -521,10 +521,10 @@ func ReadFit(f string) (Workout, error) {
 	steps := fitf.WorkoutSteps
 
 	neww := Workout{}
-	neww.Name = w.Workout.WktName
+	neww.Name = w.WktName
 	// use sportMapping to get the sport name
 	for k, v := range sportMapping {
-		if v == w.Workout.Sport {
+		if v == w.Sport {
 			neww.Sport = k
 		}
 	}
