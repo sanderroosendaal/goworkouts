@@ -348,6 +348,20 @@ var targetTypes = map[string]typedef.WktStepTarget{
 	"SwimStroke":   typedef.WktStepTargetSwimStroke,   //  WktStepTarget = 11
 	"SpeedLap":     typedef.WktStepTargetSpeedLap,     // WktStepTarget = 12
 	"HeartRateLap": typedef.WktStepTargetHeartRateLap, // WktStepTarget = 13
+	"speed":	typedef.WktStepTargetSpeed,        //        WktStepTarget = 0
+	"heart_rate":	typedef.WktStepTargetHeartRate,    //    WktStepTarget = 1
+	"open":	        typedef.WktStepTargetOpen,         //         WktStepTarget = 2
+	"cadence":	typedef.WktStepTargetCadence,      //      WktStepTarget = 3
+	"power":	typedef.WktStepTargetPower,        //        WktStepTarget = 4
+	"grade":	typedef.WktStepTargetGrade,        //        WktStepTarget = 5
+	"resistance":	typedef.WktStepTargetResistance,   //   WktStepTarget = 6
+	"power_3s":	typedef.WktStepTargetPower3S,      //   WktStepTarget = 7
+	"power_10s":	typedef.WktStepTargetPower10S,     //    WktStepTarget = 8
+	"power_30s":	typedef.WktStepTargetPower30S,     //   WktStepTarget = 9
+	"power_lap":	typedef.WktStepTargetPowerLap,     //   WktStepTarget = 10
+	"swim_stroke":	typedef.WktStepTargetSwimStroke,   //  WktStepTarget = 11
+	"speed_lap":	typedef.WktStepTargetSpeedLap,     // WktStepTarget = 12
+	"heart_rate_lap":typedef.WktStepTargetHeartRateLap, // WktStepTarget = 13
 }
 
 var intensityTypes = map[string]typedef.Intensity{
@@ -358,6 +372,13 @@ var intensityTypes = map[string]typedef.Intensity{
 	"Recovery": typedef.IntensityRecovery, // Intensity = 4
 	"Interval": typedef.IntensityInterval, // Intensity = 5
 	"Other": typedef.IntensityOther, // Intensity = 6
+	"active":   typedef.IntensityActive,   //   Intensity = 0
+	"rest":     typedef.IntensityRest,     //  Intensity = 1
+	"warmup":   typedef.IntensityWarmup,   // Intensity = 2
+	"cooldown": typedef.IntensityCooldown, // Intensity = 3
+	"recovery": typedef.IntensityRecovery, // Intensity = 4
+	"interval": typedef.IntensityInterval, // Intensity = 5
+	"other": typedef.IntensityOther, // Intensity = 6
 	//IntensityInvalid  Intensity = 0xFF
 }
 
@@ -394,6 +415,38 @@ var durationTypes = map[string]typedef.WktStepDuration{
 	"Reps":                               typedef.WktStepDurationReps,                            // WktStepDuration = 29
 	"TimeOnly":                           typedef.WktStepDurationTimeOnly,                        // WktStepDuration = 31
 	//"Invalid":                            31,                               // WktStepDuration = 0xFF
+	"time":                               typedef.WktStepDurationTime,
+	"distance":                           typedef.WktStepDurationDistance,
+	"hr_less_than":                       typedef.WktStepDurationHrLessThan,                      //                         // WktStepDuration = 2
+	"hr_greater_than":                    typedef.WktStepDurationHrGreaterThan,                   //                      // WktStepDuration = 3
+	"calories":                           typedef.WktStepDurationCalories,                        //                           // WktStepDuration = 4
+	"open":                               typedef.WktStepDurationOpen,                            //                               // WktStepDuration = 5
+	"repeat_until_steps_cmplt":           typedef.WktStepDurationRepeatUntilStepsCmplt,           // WktStepDuration = 6
+	"repeat_until_time":                  typedef.WktStepDurationRepeatUntilTime,                 // WktStepDuration = 7
+	"repeat_until_distance":              typedef.WktStepDurationRepeatUntilDistance,             // WktStepDuration = 8
+	"repeat_until_calories":              typedef.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 9
+	"repeat_until_hr_less_than":          typedef.WktStepDurationRepeatUntilHrLessThan,           // WktStepDuration = 10
+	"repeat_until_hr_greater_than":       typedef.WktStepDurationRepeatUntilHrGreaterThan,        // WktStepDuration = 11
+	"repeat_until_power_less_than":       typedef.WktStepDurationRepeatUntilPowerLessThan,        // WktStepDuration = 12
+	"repeat_until_power_greater_than":    typedef.WktStepDurationRepeatUntilPowerGreaterThan,     // WktStepDuration = 13
+	"power_less_than":                    typedef.WktStepDurationPowerLessThan,                   // WktStepDuration = 14
+	"power_greater_than":                 typedef.WktStepDurationPowerGreaterThan,                // WktStepDuration = 15
+	"training_peaks_tss":                 typedef.WktStepDurationTrainingPeaksTss,                // WktStepDuration = 16
+	"repeat_until_power_last_lap_less_than":    typedef.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 17
+	"repeat_until_max_power_last_lap_less_than": typedef.WktStepDurationRepeatUntilPowerLastLapLessThan, // WktStepDuration = 18
+	"power_3s_less_than":                    typedef.WktStepDurationPower3SLessThan,                 // WktStepDuration = 19
+	"power_10s_less_than":                   typedef.WktStepDurationPower10SLessThan,                // WktStepDuration = 20
+	"power_30s_less_than":                   typedef.WktStepDurationPower30SLessThan,                // WktStepDuration = 21
+	"power_3s_greater_than":                 typedef.WktStepDurationPower3SGreaterThan,              // WktStepDuration = 22
+	"power_10s_greater_than":                typedef.WktStepDurationPower10SGreaterThan,             // WktStepDuration = 23
+	"power_30s_greater_than":                typedef.WktStepDurationPower30SGreaterThan,             // WktStepDuration = 24
+	"power_lap_less_than":                   typedef.WktStepDurationPowerLapLessThan,                // WktStepDuration = 25
+	"power_lap_greater_than":                typedef.WktStepDurationPowerLapGreaterThan,             // WktStepDuration = 26
+	"repeat_until_training_peaks_tss":        typedef.WktStepDurationRepeatUntilTrainingPeaksTss,     // WktStepDuration = 27
+	"repetition_time":                     typedef.WktStepDurationRepetitionTime,                  // WktStepDuration = 28
+	"reps":                               typedef.WktStepDurationReps,                            // WktStepDuration = 29
+	"time_only":                           typedef.WktStepDurationTimeOnly,                        // WktStepDuration = 31
+	//"Invalid":                            31,                               // WktStepDuration = 0xFF
 }
 
 // ToFIT exports to FIT
@@ -404,7 +457,6 @@ func (w *Workout) ToFIT() (proto.FIT, error) {
 
 	for _, step := range w.Steps {
 		newstep := mesgdef.NewWorkoutStep(nil)
-
 		newstep.MessageIndex = step.MessageIndex
 		newstep.WktStepName = step.WktStepName
 		newstep.DurationType = durationTypes[step.DurationType]
