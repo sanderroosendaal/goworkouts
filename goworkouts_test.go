@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"io/ioutil"
 	"testing"
 	"strings"
 
-	"github.com/tormoder/fit"
+	//	"github.com/tormoder/fit"
 	"github.com/google/uuid"
 	"github.com/muktihari/fit/decoder"
     "github.com/muktihari/fit/profile/filedef"
@@ -247,10 +246,28 @@ func TestReadFittoFIT(t *testing.T) {
 	if !ok {
 		t.Errorf("Not written")
 	}
-	data, _ := ioutil.ReadFile("testdata/new.fit")
-	_, err = fit.Decode(bytes.NewReader(data))
+	fitFile, err := os.Open("testdata/new.fit")
+	if err != nil {
+		t.Errorf("Could not find file")
+	}
+	defer fitFile.Close()
+
+	lis := filedef.NewListener()
+	defer lis.Close()
+
+	dec := decoder.New(fitFile,
+		decoder.WithMesgListener(lis),
+		decoder.WithBroadcastOnly(),
+	)
+	_, err = dec.Decode()
+	
 	if err != nil {
 		t.Errorf("Could not read written file")
+	}
+
+	_, ok = lis.File().(*filedef.Workout)
+	if !ok {
+		t.Errorf("Not of Workout type")
 	}
 }
 
