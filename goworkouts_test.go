@@ -60,6 +60,73 @@ func TestMultipleRepeats(t *testing.T) {
 	}
 }
 
+func TestWorkoutCustomTargetValues(t *testing.T) {
+	w, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("ReadFit returned an error")
+	}
+	// export to tmp/WorkoutCustomTargetValues2.fit
+	wjfit, err := w.ToFIT()
+	if err != nil {
+		t.Errorf("ToFit returned an error")
+	}
+	ok, err := WriteFit("tmp/WorkoutCustomTargetValues2.fit", &wjfit, true)
+	if err != nil {
+		t.Errorf("Error writing file")
+	}
+	if !ok {
+		t.Errorf("Not written")
+	}
+	// read back the file
+	fitFile, err := os.Open("tmp/WorkoutCustomTargetValues2.fit")
+	if err != nil {
+		t.Errorf("Could not find file")
+	}
+	defer fitFile.Close()
+
+	lis := filedef.NewListener()
+	defer lis.Close()
+
+	dec := decoder.New(fitFile,
+		decoder.WithMesgListener(lis),
+		decoder.WithBroadcastOnly(),
+	)
+	_, err = dec.Decode()
+	if err != nil {
+		t.Errorf("Could not read written file")
+	}
+	// create a goworkouts.Workout from the file
+	_, ok = lis.File().(*filedef.Workout)
+	if !ok {
+		t.Errorf("Not of Workout type")
+	}
+	wnew, err := ReadFit("tmp/WorkoutCustomTargetValues2.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+
+	// compare steps between w and wnew. For each step, report the differences
+	for i, step := range w.Steps {
+		if step.WktStepName != wnew.Steps[i].WktStepName {
+			t.Errorf("Step %d: Expected %v, got %v", i, step.WktStepName, wnew.Steps[i].WktStepName)
+		}
+		if step.DurationType != wnew.Steps[i].DurationType {
+			t.Errorf("Step %d: Expected %v, got %v", i, step.DurationType, wnew.Steps[i].DurationType)
+		}
+		if step.DurationValue != wnew.Steps[i].DurationValue {
+			t.Errorf("Step %d: Expected %v, got %v", i, step.DurationValue, wnew.Steps[i].DurationValue)
+		}
+		if step.TargetType != wnew.Steps[i].TargetType {
+			t.Errorf("Step %d: Expected %v, got %v", i, step.TargetType, wnew.Steps[i].TargetType)
+		}
+		if step.TargetValue != wnew.Steps[i].TargetValue {
+			t.Errorf("Step %d: Expected %v, got %v", i, step.TargetValue, wnew.Steps[i].TargetValue)
+		}
+	}
+		
+}
+
 
 func TestReadFit(t *testing.T) {
 	_, err := ReadFit("testdata/fitsdk/WorkoutCustomTargetValues.fit")
