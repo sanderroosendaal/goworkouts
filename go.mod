@@ -13,6 +13,7 @@ require (
 	github.com/client9/misspell v0.3.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20210914165742-4cc7213b9bc8 // indirect
+	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/kisielk/errcheck v1.6.1 // indirect
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b // indirect
 	github.com/tormoder/fit v0.15.0 // indirect

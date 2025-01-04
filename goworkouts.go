@@ -22,6 +22,8 @@ import (
 	"github.com/muktihari/fit/profile/mesgdef"
 	"github.com/muktihari/fit/proto"
 
+	"github.com/iancoleman/strcase"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -209,33 +211,33 @@ func (w *Workout) ToIntervals() (string, error) {
 		idxlist = append(idxlist, step.MessageIndex)
 		var buffer bytes.Buffer
 		var prefix, duration, target, name, notes, intensity string
-		if step.DurationType == "repeat_until_steps_cmplt" {
+		if strcase.ToSnake(step.DurationType) == "repeat_until_steps_cmplt" {
 			nr_repeats := step.TargetValue
 			idx := typedef.MessageIndex(step.DurationValue)
 			stepslist = AddRepeats(stepslist, idxlist, idx, nr_repeats)
 			stepslist = append(stepslist, "\n")
 		} else{
-			if step.DurationType == "time" {
+			if strcase.ToSnake(step.DurationType) == "time" {
 				seconds := float64(step.DurationValue)/1000.
 				duration = fmt.Sprintf("%vs", seconds)
 			}
-			if step.DurationType == "distance" {
+			if strcase.ToSnake(step.DurationType) == "distance" {
 				meters := float64(step.DurationValue)/1.e5
 				duration = fmt.Sprintf("%vkm", meters)
 			}
-			if step.TargetType == "power" || step.TargetType == "power_lap" {
+			if strcase.ToSnake(step.TargetType) == "power" || strcase.ToSnake(step.TargetType) == "power_lap" {
 				target, err = FitPowerConversion(step)
 				if err != nil {
 					target = ""
 				}
 			}
-			if step.TargetType == "heart_rate" || step.TargetType == "heart_rate_lap" {
+			if strcase.ToSnake(step.TargetType) == "heart_rate" || strcase.ToSnake(step.TargetType) == "heart_rate_lap" {
 				target, err = FitHRConversion(step)
 				if err != nil {
 					target = ""
 				}
 			}
-			if step.TargetType == "cadence" {
+			if strcase.ToSnake(step.TargetType) == "cadence" {
 				spm := step.TargetValue
 				if spm > 0 {
 					target = fmt.Sprintf("%vrpm", spm)
@@ -245,20 +247,20 @@ func (w *Workout) ToIntervals() (string, error) {
 					target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
 				}
 			}
-			if step.Intensity == "warmup" {
+			if strcase.ToSnake(step.Intensity) == "warmup" {
 				prefix = "\nWarmup\n"
 				target = "ramp Z1-Z2"
 			}
-			if step.Intensity == "cooldown" {
+			if strcase.ToSnake(step.Intensity) == "cooldown" {
 				prefix = "\nCooldown\n"
 				target = "ramp Z2-Z1"
 			}
 
-			if step.Intensity == "recovery" {
+			if strcase.ToSnake(step.Intensity) == "recovery" {
 				target = "Z1"
 			}
 
-			if step.Intensity == "rest" {
+			if strcase.ToSnake(step.Intensity) == "rest" {
 				target = "Z1"
 			}
 			// Speed
