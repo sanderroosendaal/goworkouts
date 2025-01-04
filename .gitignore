@@ -6,7 +6,8 @@
 *.dylib
 
 # exit file
-#testdata/*.fit
+# testdata/*.fit
+tmp/*.fit
 
 # Test binary, built with `go test -c`
 *.test
