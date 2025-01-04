@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"strings"
 
+	//	"github.com/tormoder/fit"
 	"github.com/google/uuid"
-	"github.com/tormoder/fit"
+	"github.com/muktihari/fit/decoder"
+    "github.com/muktihari/fit/profile/filedef"
 )
 
 /*
@@ -40,13 +42,17 @@ func TestMultipleRepeatReplacement(t *testing.T) {
 
 func TestMultipleRepeats(t *testing.T) {
 	w, err := ReadFit("testdata/nestedrepeats2.fit")
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("ReadFit returned an error")
+	}
 	got, err := w.ToIntervals()
 	got = strings.TrimSpace(got)
 	if err != nil {
 		fmt.Println(err.Error())
 		t.Errorf("TestMultipleRepeats returned an error")
 	}
-	want := "\nWarmup\n- 600s ramp Z1-Z2 Warmup w10 Warming up 10 minutes\n\n\n24x\n- 45s Z5 Active 45sec Sprint for 45 seconds\n- 75s Z1 Rest r75\n\n\n\nCooldown\n- 600s ramp Z2-Z1 Cooldown cd10\n"
+	want := "\nWarmup\n- 600s ramp Z1-Z2 warmup w10 Warming up 10 minutes\n\n\n24x\n- 45s Z5 active 45sec Sprint for 45 seconds\n- 75s Z1 rest r75\n\n\n\nCooldown\n- 600s ramp Z2-Z1 cooldown cd10\n"
 	want = strings.TrimSpace(want)
 	if got != want {
 		fmt.Println(len(got), len(want))
@@ -96,8 +102,9 @@ func TestDecodeJSONOK2(t *testing.T) {
 
 func TestReadFit3(t *testing.T) {
 	w, err := ReadFit("testdata/fitsdk/WorkoutRepeatSteps.fit")
-	_, err = w.ToJSON()
+	s, err := w.ToJSON()
 	if err != nil {
+		fmt.Println(s)
 		t.Errorf("ReadFit returned an error")
 	}
 	// fmt.Println(string(wjson))
@@ -142,7 +149,10 @@ func TestReadFittoJSON(t *testing.T) {
 		t.Errorf("ReadFit returned an error")
 	}
 	wjson, err := w.ToJSON()
-	if len(wjson) != 934 {
+	if len(wjson) != 937 {
+		// print wjson converted to string
+		fmt.Println(string(wjson), len(wjson))
+
 		t.Errorf("ToJSON returned a string of a different length")
 	}
 	if err != nil {
@@ -210,7 +220,9 @@ func TestReadFittoYAML(t *testing.T) {
 	wyaml, err := w.ToYAML()
 	//fmt.Println(len(wyaml))
 	//fmt.Println(string(wyaml))
-	if len(wyaml) != 922 {
+	if len(wyaml) != 925 {
+		// print wyaml converted to string
+		// fmt.Println(string(wyaml), len(wyaml))
 		t.Errorf("ToYAML returned a string of a different length")
 	}
 	if err != nil {
@@ -227,64 +239,117 @@ func TestReadFittoFIT(t *testing.T) {
 	if err != nil {
 		t.Errorf("ToFit returned an error")
 	}
-	ok, err := WriteFit("testdata/new.fit", wjfit, true)
+	ok, err := WriteFit("tmp/new.fit", &wjfit, true)
 	if err != nil {
 		t.Errorf("Error writing file")
 	}
 	if !ok {
 		t.Errorf("Not written")
 	}
-	data, _ := ioutil.ReadFile("testdata/new.fit")
-	_, err = fit.Decode(bytes.NewReader(data))
+	fitFile, err := os.Open("testdata/new.fit")
+	if err != nil {
+		t.Errorf("Could not find file")
+	}
+	defer fitFile.Close()
+
+	lis := filedef.NewListener()
+	defer lis.Close()
+
+	dec := decoder.New(fitFile,
+		decoder.WithMesgListener(lis),
+		decoder.WithBroadcastOnly(),
+	)
+	_, err = dec.Decode()
+	
 	if err != nil {
 		t.Errorf("Could not read written file")
+	}
+
+	_, ok = lis.File().(*filedef.Workout)
+	if !ok {
+		t.Errorf("Not of Workout type")
 	}
 }
 
 func TestWriter(t *testing.T) {
-	data, _ := ioutil.ReadFile("testdata/fitsdk/WorkoutCustomTargetValues.fit")
-	fitf, _ := fit.Decode(bytes.NewReader(data))
-
-	oldWorkout, err := fitf.Workout()
+	f, err := os.Open("testdata/fitsdk/WorkoutCustomTargetValues.fit")
 	if err != nil {
-		t.Errorf("Unable to parse test file")
+		t.Errorf("Could not find file")
+	}
+	defer f.Close()
+
+	lis := filedef.NewListener()
+	defer lis.Close()
+
+	dec := decoder.New(f,
+		decoder.WithMesgListener(lis),
+		decoder.WithBroadcastOnly(),
+	)
+
+	_, err = dec.Decode()
+	if err != nil {
+		t.Errorf("Could not decode file")
 	}
 
-	oldSteps := oldWorkout.WorkoutSteps
+	fitf, ok := lis.File().(*filedef.Workout)
+	if !ok {
+		t.Errorf("Not of Workout type")
+	}
 
-	ok, err := WriteFit("testdata/new.fit", fitf, true)
+	//oldWorkout := fitf.Workout
+	oldWorkoutSteps := fitf.WorkoutSteps
+
+	newfit := fitf.ToFIT(nil)
+
+	ok, err = WriteFit("tmp/new.fit", &newfit, true)
 	if err != nil {
 		t.Errorf("Error writing file")
 	}
 	if !ok {
 		t.Errorf("Not written")
 	}
-	data, _ = ioutil.ReadFile("testdata/new.fit")
-	fitf, err = fit.Decode(bytes.NewReader(data))
+
+
+	f2, err := os.Open("tmp/new.fit")
 	if err != nil {
 		t.Errorf("Could not read written file")
 	}
+	defer f2.Close()
 
-	workoutFile, err := fitf.Workout()
+	lis2 := filedef.NewListener()
+	defer lis2.Close()
+
+	dec2 := decoder.New(f2,
+		decoder.WithMesgListener(lis2),
+		decoder.WithBroadcastOnly(),
+	)
+
+	_, err = dec2.Decode()
 	if err != nil {
-		t.Errorf("Could not retrieve Workout from new file")
+		t.Errorf("Could not decode new file")
 	}
-	steps := workoutFile.WorkoutSteps
+
+	fitf2, ok := lis.File().(*filedef.Workout)
+	if !ok {
+		t.Errorf("New file not of workout type")
+	}
+
+	steps := fitf2.WorkoutSteps
 
 	// fmt.Printf("Got %v steps\n", len(steps))
 
-	if len(steps) != len(oldSteps) {
-		t.Errorf("Reading back new File got incorrect number of steps. Got %d, wanted %d\n", len(steps), len(oldSteps))
+	if len(steps) != len(oldWorkoutSteps) {
+		t.Errorf("Reading back new File got incorrect number of steps. Got %d, wanted %d\n", len(steps), len(oldWorkoutSteps))
 	}
 	for i, step := range steps {
-		if step.WktStepName != oldSteps[i].WktStepName {
-			t.Errorf("Expected %v, got %v", oldSteps[i].WktStepName, step.WktStepName)
+		if step.WktStepName != oldWorkoutSteps[i].WktStepName {
+			t.Errorf("Expected %v, got %v", oldWorkoutSteps[i].WktStepName, step.WktStepName)
 		}
-		if step.DurationType != oldSteps[i].DurationType {
-			t.Errorf("Expected %v, got %v", oldSteps[i].DurationType.String(), step.DurationType.String())
+		if step.DurationType != oldWorkoutSteps[i].DurationType {
+			t.Errorf("Expected %v, got %v", oldWorkoutSteps[i].DurationType.String(), step.DurationType.String())
 		}
-		if step.DurationValue != oldSteps[i].DurationValue {
-			t.Errorf("Expected %v, got %v", oldSteps[i].DurationValue, step.DurationValue)
+		if step.DurationValue != oldWorkoutSteps[i].DurationValue {
+			t.Errorf("Expected %v, got %v", oldWorkoutSteps[i].DurationValue, step.DurationValue)
 		}
 	}
 }
@@ -315,7 +380,7 @@ func TestTrainingPlan(t *testing.T) {
 	}
 	//	fmt.Println(string(planJSON))
 	//	fmt.Println(len(planJSON))
-	expected := 7674
+	expected := 7691
 	if len(planJSON) != expected {
 		t.Errorf("Conversion of the training plan to JSON gave the wrong json length. Expected %v, got %v", expected, len(planJSON))
 	}
