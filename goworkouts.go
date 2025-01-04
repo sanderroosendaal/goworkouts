@@ -209,33 +209,33 @@ func (w *Workout) ToIntervals() (string, error) {
 		idxlist = append(idxlist, step.MessageIndex)
 		var buffer bytes.Buffer
 		var prefix, duration, target, name, notes, intensity string
-		if step.DurationType == "RepeatUntilStepsCmplt" {
+		if step.DurationType == "repeat_until_steps_cmplt" {
 			nr_repeats := step.TargetValue
 			idx := typedef.MessageIndex(step.DurationValue)
 			stepslist = AddRepeats(stepslist, idxlist, idx, nr_repeats)
 			stepslist = append(stepslist, "\n")
 		} else{
-			if step.DurationType == "Time" {
+			if step.DurationType == "time" {
 				seconds := float64(step.DurationValue)/1000.
-					duration = fmt.Sprintf("%vs", seconds)
+				duration = fmt.Sprintf("%vs", seconds)
 			}
-			if step.DurationType == "Distance" {
+			if step.DurationType == "distance" {
 				meters := float64(step.DurationValue)/1.e5
-					duration = fmt.Sprintf("%vkm", meters)
+				duration = fmt.Sprintf("%vkm", meters)
 			}
-			if step.TargetType == "Power" || step.TargetType == "PowerLap" {
+			if step.TargetType == "power" || step.TargetType == "power_lap" {
 				target, err = FitPowerConversion(step)
 				if err != nil {
 					target = ""
 				}
 			}
-			if step.TargetType == "HeartRate" || step.TargetType == "HeartRateLap" {
+			if step.TargetType == "heart_rate" || step.TargetType == "heart_rate_lap" {
 				target, err = FitHRConversion(step)
 				if err != nil {
 					target = ""
 				}
 			}
-			if step.TargetType == "Cadence" {
+			if step.TargetType == "cadence" {
 				spm := step.TargetValue
 				if spm > 0 {
 					target = fmt.Sprintf("%vrpm", spm)
@@ -245,20 +245,20 @@ func (w *Workout) ToIntervals() (string, error) {
 					target = fmt.Sprintf("%v-%vrpm", spmlow, spmhigh)
 				}
 			}
-			if step.Intensity == "Warmup" {
+			if step.Intensity == "warmup" {
 				prefix = "\nWarmup\n"
 				target = "ramp Z1-Z2"
 			}
-			if step.Intensity == "Cooldown" {
+			if step.Intensity == "cooldown" {
 				prefix = "\nCooldown\n"
 				target = "ramp Z2-Z1"
 			}
 
-			if step.Intensity == "Recovery" {
+			if step.Intensity == "recovery" {
 				target = "Z1"
 			}
 
-			if step.Intensity == "Rest" {
+			if step.Intensity == "rest" {
 				target = "Z1"
 			}
 			// Speed
