@@ -29,6 +29,25 @@ func TestRowsandallFit(t *testing.T) {
     }
 */
 
+// read all files in testdata/fitsdk and convert them to JSON
+func TestAllFits(t *testing.T) {
+	files, err := os.ReadDir("testdata/fitsdk")
+	if err != nil {
+		t.Errorf("Could not read directory")
+	}
+	for _, file := range files {
+		w, err := ReadFit("testdata/fitsdk/" + file.Name())
+		if err != nil {
+			continue
+		}
+		_, err = w.ToJSON()
+		if err != nil {
+			fmt.Println(file.Name())
+			t.Errorf("Could not convert to JSON")
+		}
+	}
+}
+
 func TestMultipleRepeatReplacement(t *testing.T) {
 	input := "\n3x\n\n4x\n\n5x\nhello\nrest\n\n6x\n\n7x\n"
 	output_obtained := strings.TrimSpace(TransformRepeats(input))
@@ -144,7 +163,7 @@ func TestReadFit2(t *testing.T) {
 
 func TestDecodeJSON(t *testing.T) {
 	var wjson string
-	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}]}"
+	wjson = "{\"workoutName\": \"Test 2\", \"sport\": \"rowing\", \"filename\": \"\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Distance\", \"durationValue\": 1000, \"intensity\": \"active\"}]}"
 	w, err := FromJSON(wjson)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -155,15 +174,52 @@ func TestDecodeJSON(t *testing.T) {
 	if w.Sport != "rowing" {
 		t.Errorf("Sport is not rowing")
 	}
+
+	// check that w.Name is Test 2
+	if w.Name != "Test 2" {
+		t.Errorf("Name is not Test 2")
+	}
+}
+
+func TestDecodeJSONRepeat(t *testing.T) {
+	var wjson string
+	wjson = "{\"description\":\"\",     \"sport\":\"Rowing\",     \"steps\":     [  {\"description\":\"\",\"intensity\":\"warmup\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":900000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"wu15\",\"stepId\":0},	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":6,\"targetType\":\"power\",\"durationValue\":20000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"20s z6\",\"stepId\":1},	 {\"description\":\"\",\"intensity\":\"rest\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":40000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"r40s\",\"stepId\":2},	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":8,\"targetType\":null,\"durationValue\":1,\"durationType\":\"repeatUntilStepsCmplt\",\"wkt_step_name\":\"8x\",\"stepId\":3},	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":6,\"targetType\":\"power\",\"durationValue\":30000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"30s Z6\",\"stepId\":4}, 	 {\"description\":\"\",\"intensity\":\"rest\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":30000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"r30s\",\"stepId\":5}, 	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":8,\"targetType\":null,\"durationValue\":4,\"durationType\":\"repeatUntilStepsCmplt\",\"wkt_step_name\":\"8x (interval 4)\",\"stepId\":6}, 	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":6,\"targetType\":\"power\",\"durationValue\":40000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"40s Z6\",\"stepId\":7}, 	 {\"description\":\"\",\"intensity\":\"rest\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":20000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"r20s\",\"stepId\":8}, 	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":8,\"targetType\":null,\"durationValue\":7,\"durationType\":\"repeatUntilStepsCmplt\",\"wkt_step_name\":\"8x (step 7)\",\"stepId\":9}, 	 {\"description\":\"\",\"intensity\":\"active\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":540000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"cd10\",\"stepId\":10}, 	 {\"description\":\"Cooldown\",\"intensity\":\"cooldown\",\"targetValueHigh\":0,\"targetValueLow\":0,\"targetValue\":1,\"targetType\":\"power\",\"durationValue\":300000,\"durationType\":\"timeDuration\",\"wkt_step_name\":\"cooldown\",\"stepId\":11}      ],\"workoutName\":\"Rowing: 8x(20s@Z6/r40s)+8x(30s@Z6/r30s)+8x(40s@Z6/r20s)+9m@Z1\"}"
+	w, err := FromJSON(wjson)
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("Got error")
+	}
+	// check that w.Sport is rowing
+	if w.Sport != "Rowing" {
+		fmt.Println(w.Sport)
+		t.Errorf("Sport is not rowing")
+	}
+	// check that w.Name is correct
+	if w.Name != "Rowing: 8x(20s@Z6/r40s)+8x(30s@Z6/r30s)+8x(40s@Z6/r20s)+9m@Z1" {
+		t.Errorf("Name is not Correct")
+	}
+	s, err := w.ToIntervals()
+	if err != nil {
+		fmt.Println(err.Error())
+		t.Errorf("Got error converting to intervals")
+	}
+	if (len(s)) != 229 {
+		t.Errorf("Got error converting to intervals, resulting string is not correct length")
+	}
 }
 
 func TestDecodeJSONOK2(t *testing.T) {
 	var wjson string
-	wjson = "{\"name\": \"\", \"sport\": \"rowing\", \"filename\": \"/home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"2\", \"stepId\": 2, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"3\", \"stepId\": 3, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"4\", \"stepId\": 4, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"5\", \"stepId\": 5, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"6\", \"stepId\": 6, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"7\", \"stepId\": 7, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}]}"
-	_, err := FromJSON(wjson)
+	wjson = "{\"workoutName\": \"\", \"sport\": \"rowing\", \"filename\": \"/home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit\", \"steps\": [{\"wkt_step_name\": \"0\", \"stepId\": 0, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"1\", \"stepId\": 1, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"2\", \"stepId\": 2, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"3\", \"stepId\": 3, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"4\", \"stepId\": 4, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"5\", \"stepId\": 5, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}, {\"wkt_step_name\": \"6\", \"stepId\": 6, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Active\", \"targetType\": \"Cadence\", \"targetValue\": 22}, {\"wkt_step_name\": \"7\", \"stepId\": 7, \"durationType\": \"Time\", \"durationValue\": 120000, \"intensity\": \"Rest\"}]}"
+	w, err := FromJSON(wjson)
 	if err != nil {
 		fmt.Println(err.Error())
 		t.Errorf("Got Error")
+	}
+
+	// check that w.FileName is /home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit
+	if w.Filename != "/home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit" {
+		t.Errorf("FileName is not /home/sander/python/rowsandall/media/6cf0ad19-3bb6-4620-927d-e963c5b57be5.fit")
 	}
 }
 
@@ -335,6 +391,15 @@ func TestReadFittoFIT(t *testing.T) {
 	_, ok = lis.File().(*filedef.Workout)
 	if !ok {
 		t.Errorf("Not of Workout type")
+	}
+
+	// check if Workout Name is set correctly
+	w, err = ReadFit("tmp/new.fit")
+	if err != nil {
+		t.Errorf("ReadFit returned an error")
+	}
+	if w.Name != "Example 1" {
+		t.Errorf("Name is not set correctly")
 	}
 }
 
